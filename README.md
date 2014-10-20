@@ -1,4 +1,6 @@
-Game Development Club|||Alexander Yerkes|||Greg Gagnon|||Matthew Solorzano|||Alexander Bodycoat|||Sumarni Bennett|||Jeff Purdy|||Shane Florian
+Game Development Club
+
+Alexander Yerkes|||Greg Gagnon|||Matthew Solorzano|||Alexander Bodycoat|||Sumarni Bennett|||Jeff Purdy|||Shane Florian
 
 
 Game Style: Luftrauser
