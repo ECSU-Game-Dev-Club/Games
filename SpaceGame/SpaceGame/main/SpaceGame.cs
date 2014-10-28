@@ -126,7 +126,7 @@ namespace SpaceGame
             }
 
             //If the user moves the left thumbstick(in any direction)
-            if((gamePad1.ThumbSticks.Left.X != 0) || (gamePad1.ThumbSticks.Left.Y != 0))
+            if ((gamePad1.ThumbSticks.Left.X <= 0.2) || (gamePad1.ThumbSticks.Left.X >= -0.2) || (gamePad1.ThumbSticks.Left.Y >= 0.2) || (gamePad1.ThumbSticks.Left.Y <= 0.2))
             {
                 //Pass the X and Y value to the thrust method in the Player class
                 player1.setThrust(new Vector2(gamePad1.ThumbSticks.Left.X, (-1) * gamePad1.ThumbSticks.Left.Y));
@@ -183,7 +183,7 @@ namespace SpaceGame
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.PapayaWhip);
+            GraphicsDevice.Clear(Color.Black);
 
             //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
             //spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
@@ -195,7 +195,7 @@ namespace SpaceGame
             //###################
 
             //Drawing the player here, (the texture of the player, the vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
-            spriteBatch.Draw(playerTexture, player1.getPlayerVelocityVector(), player1.getPlayerRectangle(), Color.Black * 1f);
+            spriteBatch.Draw(playerTexture, player1.getPlayerVelocityVector(), player1.getPlayerRectangle(), Color.White * 1f);
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // DRAW EVERYTHING IN HERE!!!!!!!!!
