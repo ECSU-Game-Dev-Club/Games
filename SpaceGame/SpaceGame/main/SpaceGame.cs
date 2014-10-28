@@ -129,7 +129,7 @@ namespace SpaceGame
             if((gamePad1.ThumbSticks.Left.X != 0) || (gamePad1.ThumbSticks.Left.Y != 0))
             {
                 //Pass the X and Y value to the thrust method in the Player class
-                player1.setThrust(new Vector2(gamePad1.ThumbSticks.Left.X, gamePad1.ThumbSticks.Left.Y));
+                player1.setThrust(new Vector2(gamePad1.ThumbSticks.Left.X, (-1) * gamePad1.ThumbSticks.Left.Y));
             }
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -186,12 +186,12 @@ namespace SpaceGame
             GraphicsDevice.Clear(Color.PapayaWhip);
 
             //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
+            //spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
 
             //Begins the sprite batch so we can draw things on the screen(DEFAULT)
             //###################
             //UNCOMMENT THIS OUT TO DRAW NORMALLY WITH THE CAMERA NOT FOLLOWING THE PLAYER
-            //spriteBatch.Begin();
+            spriteBatch.Begin();
             //###################
 
             //Drawing the player here, (the texture of the player, the vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
