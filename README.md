@@ -9,7 +9,7 @@ Character(playable): Air plane, spaceship
 
 Environment: Underwater, Space, Atmosphere
 
-Enemies: Alien(Mechanical)(Go in and out), Robots(straight lines), Swarm
+Enemies: Alien(Mechanical)(Go in and out), Robots(straight lines), Swarm (chasing), Enemy spawners (create new enemies until destroyed)
 
 Antagonist: Primary Alien
 
