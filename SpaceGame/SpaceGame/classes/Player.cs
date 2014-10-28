@@ -24,7 +24,7 @@ namespace SpaceGame
         static float playerThrustScale = .1f;
         
         //Maximum player speed
-        static float playerMax = 10;   
+        static float playerMax = 10; //NOT CORRECT   
 
         //Constructor for player, starts everything
         public Player(float x, float y)
@@ -76,7 +76,7 @@ namespace SpaceGame
 
         private void calcAcceleration(GameTime gameTime)
         {
-            playerAcceleration = playerThrust * playerThrustScale;
+            playerAcceleration = playerThrust * playerThrustScale; //add gravity effect here
 
             playerVelocity += playerAcceleration;
 
