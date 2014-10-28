@@ -14,8 +14,8 @@ namespace SpaceGame
         Vector2 center;
 
         //zoom
-        float zoom = 0.9f;
-        static float zoomStatic = 0.9f;
+        float zoom = 1f;
+        static float zoomStatic = 1f;
 
         //rotation
         float rotation = 0f;
@@ -29,21 +29,25 @@ namespace SpaceGame
             origin = new Vector2(initViewPort.Width / 2.0f, initViewPort.Height / 2.0f);
         }
 
-        public void Update(Rectangle playerRectangle)
+        public void zoomCamera(int initZoom)
         {
-            //center = new Vector2(playerRectangle.X + (playerRectangle.Width / 2) - origin.X, playerRectangle.Y + (playerRectangle.Height / 2) - origin.Y);
+            zoom = initZoom;
+        }
 
-            center = new Vector2(playerRectangle.X + origin.X, playerRectangle.Y + origin.Y);
+        public void defaultCameraZoom()
+        {
+            zoom = zoomStatic;
+        }
 
-            transform = Matrix.CreateScale(new Vector3(1, 1, 0)) * Matrix.CreateTranslation(new Vector3(-center.X, -center.Y, 0));
+        public void Update(Vector2 playerVector)
+        {
+            center = new Vector2(playerVector.X - origin.X, playerVector.Y - origin.Y);
 
-            /*
             transform = Matrix.CreateTranslation(new Vector3(-center, 0.0f)) *
                         Matrix.CreateTranslation(new Vector3(-origin, 0.0f)) *
                         Matrix.CreateRotationZ(rotation) *
                         Matrix.CreateScale(zoom, zoom, 0) *
                         Matrix.CreateTranslation(new Vector3(origin, 0.0f));
-            */
         }
     }
 }

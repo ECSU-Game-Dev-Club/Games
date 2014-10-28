@@ -77,8 +77,6 @@ namespace SpaceGame
             // TODO: Add your initialization logic here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-            //Teset delete me 
-
             base.Initialize();
         }
 
@@ -170,7 +168,7 @@ namespace SpaceGame
             player1.update(gameTime);
 
             //Updates camera by passing the players rectangle and gametime
-            camera.Update(player1.getPlayerRectangle());
+            camera.Update(player1.getPlayerVelocityVector());
             
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your update logic here
@@ -187,11 +185,14 @@ namespace SpaceGame
         {
             GraphicsDevice.Clear(Color.PapayaWhip);
 
-            //Begins the sprite batch so we can draw things on the screen
-            //spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
+            //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
 
-            //Begins the sprite batch so we can draw things on the screen
-            spriteBatch.Begin();
+            //Begins the sprite batch so we can draw things on the screen(DEFAULT)
+            //###################
+            //UNCOMMENT THIS OUT TO DRAW NORMALLY WITH THE CAMERA NOT FOLLOWING THE PLAYER
+            //spriteBatch.Begin();
+            //###################
 
             //Drawing the player here, (the texture of the player, the vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
             spriteBatch.Draw(playerTexture, player1.getPlayerVelocityVector(), player1.getPlayerRectangle(), Color.Black * 1f);

@@ -22,8 +22,6 @@ namespace SpaceGame
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
 
-        int drag = 2;
-
         //Constructor for player, starts everything
         public Player(float x, float y)
         {
@@ -32,10 +30,10 @@ namespace SpaceGame
 
             playerThrust = new Vector2(0, 0);
 
-            playerVelocity = new Vector2(0, 0);
+            playerVelocity = playerLocation;
             playerAcceleration = new Vector2(0, 0);
 
-            playerRectangle = new Rectangle((int)x, (int)y, width, height);
+            playerRectangle = new Rectangle((int)playerLocation.X, (int)playerLocation.Y, width, height);
         }
 
         public void update(GameTime gameTime)
