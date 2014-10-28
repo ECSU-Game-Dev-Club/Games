@@ -21,9 +21,10 @@ namespace SpaceGame
 
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
+        static float playerThrustScale = 1;
 
         //Maximum player speed
-        static float playerSpeed = 5;
+        static float playerMax = 5;   
 
         //Constructor for player, starts everything
         public Player(float x, float y)
@@ -33,7 +34,6 @@ namespace SpaceGame
 
             playerThrust = new Vector2(0, 0);
 
-            playerVelocity = playerLocation;
             playerAcceleration = new Vector2(0, 0);
 
             playerRectangle = new Rectangle((int)playerLocation.X, (int)playerLocation.Y, width, height);
@@ -67,15 +67,23 @@ namespace SpaceGame
         public Vector2 getPlayerAccelerationVector()
         {
             return playerAcceleration;
-        } 
+        }
+ 
+        public Vector2 getPlayerLocation()
+        {
+            return playerLocation;
+        }
 
         private void calcAcceleration(GameTime gameTime)
         {
-            playerAcceleration.X = playerThrust.X * playerSpeed; //add gravity effect here
-            playerAcceleration.Y = playerThrust.Y * playerSpeed; //add gravity effect here
+            playerAcceleration.X += playerThrust.X * playerThrustScale; //add gravity effect here
+            playerAcceleration.Y += playerThrust.Y * playerThrustScale; //add gravity effect here
 
-            playerVelocity.X = playerAcceleration.X + playerVelocity.X;
-            playerVelocity.Y = playerAcceleration.Y + playerVelocity.Y;
+            playerVelocity.X += playerAcceleration.X;
+            playerVelocity.Y += playerAcceleration.Y;
+
+            playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * playerMax, playerMax);
+            playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * playerMax, playerMax);
         }
 
     }

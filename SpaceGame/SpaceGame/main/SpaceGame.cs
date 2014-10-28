@@ -195,7 +195,7 @@ namespace SpaceGame
             //###################
 
             //Drawing the player here, (the texture of the player, the vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
-            spriteBatch.Draw(playerTexture, player1.getPlayerVelocityVector(), player1.getPlayerRectangle(), Color.White * 1f);
+            spriteBatch.Draw(playerTexture, player1.getPlayerLocation(), player1.getPlayerRectangle(), Color.White * 1f);
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // DRAW EVERYTHING IN HERE!!!!!!!!!
