@@ -68,8 +68,8 @@ namespace SpaceGame
 
         private void calcAcceleration(GameTime gameTime)
         {
-            playerAcceleration.X = playerAcceleration.X + playerThrust.X;
-            playerAcceleration.Y = playerAcceleration.Y + playerThrust.Y;
+            playerAcceleration.X = playerThrust.X; //add gravity effects here
+            playerAcceleration.Y = playerThrust.Y; //add gravity effects here
 
             playerVelocity.X = playerAcceleration.X + playerVelocity.X;
             playerVelocity.Y = playerAcceleration.Y + playerVelocity.Y;
