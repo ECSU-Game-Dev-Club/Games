@@ -40,6 +40,8 @@ namespace SpaceGame
         //Sets up camera class
         Camera camera;
 
+        Gravity gravity;
+
         public SpaceGame()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -68,11 +70,12 @@ namespace SpaceGame
         protected override void Initialize()
         {
             //Initializes the player class for player1 with the spawn at 
-            player1 = new Player(500, 500);
+            player1 = new Player(500, 500, 1);
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
 
+            gravity = new Gravity(.1f);
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -164,6 +167,8 @@ namespace SpaceGame
                 player1.setThrust(new Vector2(keyboardMaxValue, 0));
             }
 
+            //updates gravity effect BEFORE player update
+            
             //Updates the player class
             player1.update(gameTime);
 
