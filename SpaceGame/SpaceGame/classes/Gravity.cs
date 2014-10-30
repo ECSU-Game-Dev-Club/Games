@@ -14,23 +14,36 @@ namespace SpaceGame
         //gravitational constant is the strength of gravity in the game
         double gravitationalConstant;
         //actualAcceleration is the acceleration as a 1D value
-        //vectorAcceleration turns the 1D acceleration into a 2D vector for use in our game
-        double actualAcceleration;  
-        public Vector2 vectorAcceleration; 
+        //gVectorAcceleration turns the 1D acceleration into a 2D vector for use in our game
+        double gActualAcceleration;  
+        public Vector2 gVectorAcceleration; 
        
        public Gravity(float initGravitationalConstant)
         {
             gravitationalConstant = initGravitationalConstant;
         } 
         //calculates gravitational pull of xy1 on xy2
-        public Vector2 calcVectorAcceleration(float x1,float y1, float x2, float y2, float mass1, float mass2)
+        public Vector2 calcGVectorAcceleration(double x1, double y1, double x2, double y2, double mass1, double mass2)
         {
             distance = Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
-            degree = Math.Tan((x1 - x2) / (y1 - y2) * pi / 180);
-            actualAcceleration = (gravitationalConstant * mass1 * mass2) / Math.Pow(distance, 2);
-            vectorAcceleration.X = (float) (actualAcceleration * Math.Cos(degree * pi / 180));
-            vectorAcceleration.Y = (float) (actualAcceleration * Math.Sin(degree * pi / 180));
-            return vectorAcceleration;
+            degree = (Math.Atan((y1 - y2) / (x1 - x2))) * 180 / pi;
+            gActualAcceleration = -1 * (gravitationalConstant * mass1 * mass2) / Math.Pow(distance, 2);
+            if (x1 - x2 >= 0)
+                gVectorAcceleration.X = (float) (-1 * (gActualAcceleration * Math.Cos(degree * pi / 180)));
+            else
+                gVectorAcceleration.X = (float)(gActualAcceleration * Math.Cos(degree * pi / 180));
+
+            if (x1 - x2 >= 0)
+                gVectorAcceleration.Y = (float)(-1 * (gActualAcceleration * Math.Sin(degree * pi / 180)));
+            else
+                gVectorAcceleration.Y = (float)(gActualAcceleration * Math.Sin(degree * pi / 180));
+           
+
+            Console.Write("{0, 10}", gVectorAcceleration.X + "       ");
+            Console.Write("{0, 10}", gVectorAcceleration.Y);
+            Console.WriteLine(" ");
+
+            return gVectorAcceleration;
         }
     }
 }

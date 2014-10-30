@@ -167,8 +167,6 @@ namespace SpaceGame
                 player1.setThrust(new Vector2(keyboardMaxValue, 0));
             }
 
-            //updates gravity effect BEFORE player update
-            
             //Updates the player class
             player1.update(gameTime);
 

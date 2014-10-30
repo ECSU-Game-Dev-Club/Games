@@ -8,19 +8,19 @@ namespace SpaceGame
 {
     class Player
     {
-        Gravity gravity;
+        Gravity gravity = new Gravity(.1f);
         Rectangle playerRectangle;
         int width = 10;
         int height = 10;
-        double playerMass;
+        public double playerMass;
 
         //Players location
-        Vector2 playerLocation;
+        public Vector2 playerLocation;
 
         //Players velocity and acceleration for calculating speed
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
-        Vector2 playerVectorAcceleration;
+        Vector2 playerGVectorAcceleration;
 
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
@@ -78,14 +78,20 @@ namespace SpaceGame
             return playerLocation;
         }
 
-        public void setPlayerVectorAcceleration(Vector2 vectorAcceleration)
+        void setPlayerGVectorAcceleration(Vector2 gVectorAcceleration)
         {
-           playerVectorAcceleration = vectorAcceleration;
+           playerGVectorAcceleration = gVectorAcceleration;
         }
 
         private void calcAcceleration(GameTime gameTime)
         {
-            playerAcceleration = (playerThrust * playerThrustScale) /*add gravity effect here*/ + playerVectorAcceleration;
+            // (300,300) is a temporary value for gravity well location, 10000f is a temporary value for gravity well mass (planet mass)
+            setPlayerGVectorAcceleration(gravity.calcGVectorAcceleration(300, 300, playerLocation.X, playerLocation.Y, 30000f, playerMass));
+            playerAcceleration = (playerThrust * playerThrustScale) /*add gravity effect here*/ + playerGVectorAcceleration;
+            /* temporary test for 2 gravity wells (SUPER COOOOL)
+            setPlayerGVectorAcceleration(gravity.calcGVectorAcceleration(700, 700, playerLocation.X, playerLocation.Y, 30000f, playerMass));
+            playerAcceleration += playerGVectorAcceleration;
+            */ 
             playerVelocity += playerAcceleration;
 
             playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * playerMax, playerMax);
