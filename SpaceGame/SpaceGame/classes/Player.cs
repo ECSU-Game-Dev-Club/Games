@@ -20,7 +20,7 @@ namespace SpaceGame
         //Players velocity and acceleration for calculating speed
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
-        Vector2 playerGVectorAcceleration;
+        Vector2 gPlayerVectorAcceleration;
 
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
@@ -78,16 +78,17 @@ namespace SpaceGame
             return playerLocation;
         }
 
-        void setPlayerGVectorAcceleration(Vector2 gVectorAcceleration)
+        void calcGPlayerVectortAcceleration(double gLocationX, double gLocationY, double gMass)
         {
-           playerGVectorAcceleration = gVectorAcceleration;
+            gPlayerVectorAcceleration = gravity.calcGVectorAcceleration(gLocationX, gLocationY, playerLocation.X, playerLocation.Y, gMass, playerMass);
         }
 
         private void calcAcceleration(GameTime gameTime)
         {
             // (300,300) is a temporary value for gravity well location, 10000f is a temporary value for gravity well mass (planet mass)
-            setPlayerGVectorAcceleration(gravity.calcGVectorAcceleration(300, 300, playerLocation.X, playerLocation.Y, 30000f, playerMass));
-            playerAcceleration = (playerThrust * playerThrustScale) /*add gravity effect here*/ + playerGVectorAcceleration;
+            // for loop here for multiple gravity wells
+            calcGPlayerVectortAcceleration(300, 300, 10000);
+            playerAcceleration = (playerThrust * playerThrustScale) /*add gravity effect here*/ + gPlayerVectorAcceleration;
             /* temporary test for 2 gravity wells (SUPER COOOOL)
             setPlayerGVectorAcceleration(gravity.calcGVectorAcceleration(700, 700, playerLocation.X, playerLocation.Y, 30000f, playerMass));
             playerAcceleration += playerGVectorAcceleration;

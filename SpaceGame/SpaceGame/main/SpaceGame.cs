@@ -74,8 +74,7 @@ namespace SpaceGame
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
-
-            gravity = new Gravity(.1f);
+ 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
