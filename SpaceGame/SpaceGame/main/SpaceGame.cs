@@ -19,18 +19,25 @@ namespace SpaceGame
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        //FPS Variables
+        int totalFrames = 0;
+        float elapsedTime = 0.0f;
+        int fps = 0;
+
         //(Public AND Static so we can see it in other classes (EX: camera))
         //Player class with player variables and calculations
         Player player1;
 
         //Player1's gamepad
         GamePadState gamePad1;
+        GamePadState gamePad1_OLDSTATE;
 
         //Simple 1x1 png texture to fill the drawn square
         Texture2D playerTexture;
 
         //KEYBOAD
         KeyboardState keyboard;
+        KeyboardState keyboard_OLDSTATE;
 
         //Setting up a rectangle for the users screen size
         Rectangle ScreenSize;
@@ -39,8 +46,6 @@ namespace SpaceGame
 
         //Sets up camera class
         Camera camera;
-
-        Gravity gravity;
 
         public SpaceGame()
         {
@@ -70,11 +75,11 @@ namespace SpaceGame
         protected override void Initialize()
         {
             //Initializes the player class for player1 with the spawn at 
-            player1 = new Player(500, 500, 1);
+            player1 = new Player(500, 500);
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
- 
+
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -117,6 +122,23 @@ namespace SpaceGame
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            #region"FPS COUNTER"
+            //Calculates FPS
+            elapsedTime += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            //1 Second has passed
+            if (elapsedTime >= 1000.0f)
+            {
+                fps = totalFrames;
+                totalFrames = 0;
+                elapsedTime = 0;
+            }
+
+            //Writes FPS to console
+            Console.Clear();
+            Console.WriteLine(fps);
+            #endregion
+
             //Gets both gamepad and keyboard states(what buttons are pressed)
             gamePad1 = GamePad.GetState(PlayerIndex.One);
             keyboard = Keyboard.GetState();
@@ -127,54 +149,19 @@ namespace SpaceGame
                 this.Exit();
             }
 
-            //If the user moves the left thumbstick(in any direction)
-            if ((gamePad1.ThumbSticks.Left.X <= 0.2) || (gamePad1.ThumbSticks.Left.X >= -0.2) || (gamePad1.ThumbSticks.Left.Y >= 0.2) || (gamePad1.ThumbSticks.Left.Y <= 0.2))
-            {
-                //Pass the X and Y value to the thrust method in the Player class
-                player1.setThrust(new Vector2(gamePad1.ThumbSticks.Left.X, (-1) * gamePad1.ThumbSticks.Left.Y));
-            }
-
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            //When using keyboards 1 is too fast so I did .5
-            float keyboardMaxValue = 0.5f;
-
-            //If keyboard key 'Up' is pressed
-            if(keyboard.IsKeyDown(Keys.Up))
-            {
-                //The user is pressing UP so the Y value is -keyboardMaxValue
-                player1.setThrust(new Vector2(0, (-1) * keyboardMaxValue));
-            }
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            //If keyboard key 'Down' is pressed
-            if (keyboard.IsKeyDown(Keys.Down))
-            {
-                //The user is pressing DOWN so the Y value is +keyboardMaxValue
-                player1.setThrust(new Vector2(0, keyboardMaxValue));
-            }
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            //If keyboard key 'Left' is pressed
-            if (keyboard.IsKeyDown(Keys.Left))
-            {
-                //The user is pressing LEFT so the X value is -keyboardMaxValue
-                player1.setThrust(new Vector2((-1) * keyboardMaxValue, 0));
-            }
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            //If keyboard key 'Right' is pressed
-            if (keyboard.IsKeyDown(Keys.Right))
-            {
-                //The user is pressing RIGHT so the X value is +keyboardMaxValue
-                player1.setThrust(new Vector2(keyboardMaxValue, 0));
-            }
-
-            //Updates the player class
-            player1.update(gameTime);
+            //Updates the player class and passes all inputs
+            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE);
 
             //Updates camera by passing the players rectangle and gametime
             camera.Update(player1.getPlayerVelocityVector());
-            
+
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your update logic here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+            //PREVIOUS FRAME GAMEPAD AND KEYBOARD STATES - Always put at bottom
+            gamePad1_OLDSTATE = gamePad1;
+            keyboard_OLDSTATE = keyboard;
 
             base.Update(gameTime);
         }
@@ -185,6 +172,9 @@ namespace SpaceGame
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            //Counts Frames for FPS
+            totalFrames++;
+
             GraphicsDevice.Clear(Color.Black);
 
             //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
@@ -196,7 +186,7 @@ namespace SpaceGame
             spriteBatch.Begin();
             //###################
 
-            //Drawing the player here, (the texture of the player, the vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
+            //Drawing the player here, (the texture of the player, the location vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
             spriteBatch.Draw(playerTexture, player1.getPlayerLocation(), player1.getPlayerRectangle(), Color.White * 1f);
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
