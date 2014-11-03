@@ -39,6 +39,10 @@ namespace SpaceGame
         KeyboardState keyboard;
         KeyboardState keyboard_OLDSTATE;
 
+        //Mouse input
+        MouseState mouse;
+        MouseState mouse_OLDSTATE;
+
         //Setting up a rectangle for the users screen size
         Rectangle ScreenSize;
         //Is the game in fullscreen mode
@@ -46,6 +50,9 @@ namespace SpaceGame
 
         //Sets up camera class
         Camera camera;
+
+        //GRAVITY STUFF - DELELTE ME WHEN LEVELS COME IN
+        List<Gravity> gravityList = new List<Gravity>();
 
         public SpaceGame()
         {
@@ -64,6 +71,8 @@ namespace SpaceGame
 
             //Is it in fullscreen mode
             graphics.IsFullScreen = isFullScreen;
+
+            IsMouseVisible = true;
         }
 
         /// <summary>
@@ -79,6 +88,9 @@ namespace SpaceGame
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
+
+            //Initializing Mouse
+            mouse = Mouse.GetState();
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
@@ -142,6 +154,7 @@ namespace SpaceGame
             //Gets both gamepad and keyboard states(what buttons are pressed)
             gamePad1 = GamePad.GetState(PlayerIndex.One);
             keyboard = Keyboard.GetState();
+            mouse = Mouse.GetState();
 
             // Allows the game to exit, by pressing back on gamepad OR escape on keyboard
             if (gamePad1.Buttons.Back == ButtonState.Pressed || keyboard.IsKeyDown(Keys.Escape))
@@ -149,8 +162,13 @@ namespace SpaceGame
                 this.Exit();
             }
 
+            if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
+            {
+                gravityList.Add(new Gravity(mouse.X, mouse.Y, 10000));
+            }
+
             //Updates the player class and passes all inputs
-            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE);
+            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
 
             //Updates camera by passing the players rectangle and gametime
             camera.Update(player1.getPlayerVelocityVector());
@@ -162,6 +180,7 @@ namespace SpaceGame
             //PREVIOUS FRAME GAMEPAD AND KEYBOARD STATES - Always put at bottom
             gamePad1_OLDSTATE = gamePad1;
             keyboard_OLDSTATE = keyboard;
+            mouse_OLDSTATE = mouse;
 
             base.Update(gameTime);
         }
