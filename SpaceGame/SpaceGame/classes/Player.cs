@@ -25,6 +25,11 @@ namespace SpaceGame
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
 
+        //predictive 
+        Vector2[] playerPredictedLocation = new Vector2[240];
+        Vector2[] playerPredictedVelocity = new Vector2[240];
+        Vector2[] playerPredictedAcceleration = new Vector2[240];
+
         //Player mass
         const double PLAYERMASS = 1;
 
@@ -184,15 +189,14 @@ namespace SpaceGame
         {
             return playerLocation;
         }
+        //predictive
+        public Vector2 getPlayerPredictedLocation(int k)
+        {
+            return playerPredictedLocation[k];
+        }
 
         private void calcAcceleration(List<Gravity> gravityList)
         {
-            /* TEMP GRAVITY
-            // (300,300) is a temporary value for gravity well location, 10000f is a temporary value for gravity well mass (planet mass)
-            // for loop here for multiple gravity wells
-            //calcGPlayerVectortAcceleration(300, 300, 10000);
-            */
-
             Vector2 temp = new Vector2();
 
             for (int i = 0; i < gravityList.Count(); i++)
@@ -205,15 +209,36 @@ namespace SpaceGame
 
             temp = new Vector2();
 
-            /* temporary test for 2 gravity wells (SUPER COOOOL)
-            setPlayerGVectorAcceleration(gravity.calcGVectorAcceleration(700, 700, playerLocation.X, playerLocation.Y, 30000f, playerMass));
-            playerAcceleration += playerGVectorAcceleration;
-            */
-
             playerVelocity += playerAcceleration;
 
             playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
             playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
+
+            //predictive path
+            playerPredictedLocation[0] = playerLocation;
+            playerPredictedVelocity[0] = playerVelocity;
+            playerPredictedAcceleration[0] = playerAcceleration;
+
+            for (int k = 1; k < 240; k++)
+            {
+                Vector2 pTemp = new Vector2();
+
+                for (int i = 0; i < gravityList.Count(); i++)
+                {
+                    pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k - 1].X, playerPredictedLocation[k - 1].Y, PLAYERMASS);
+                    //Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYERMASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
+                }
+
+                playerPredictedAcceleration[k] = pTemp;
+
+                pTemp = new Vector2();
+
+                playerPredictedVelocity[k] += playerPredictedAcceleration[k];
+
+                playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
+                playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
+                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
+            }
         }
     }
 }
