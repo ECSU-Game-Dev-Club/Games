@@ -26,17 +26,17 @@ namespace SpaceGame
         Vector2 playerAcceleration;
 
         //Player mass
-        static double playerMass = 1;
+        const double PLAYERMASS = 1;
 
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
-        static float playerThrustScale = .1f;
+        const float PLAYERTHRUSTSCALE = .1f;
 
         //Player Boost Velocity
-        static float playerBoostVelocity = 5;
+        const float PLAYERBOOSTVELOCITY = 5;
 
         //Maximum player speed
-        static float playerMax = 10; //NOT CORRECT   
+        const float PLAYERMAX = 10; //NOT CORRECT   
 
         //Constructor for player, starts/initializes everything
         public Player(float x, float y)
@@ -50,7 +50,7 @@ namespace SpaceGame
 
             playerAcceleration = new Vector2(0, 0);
 
-            playerRectangle = new Rectangle((int)playerLocation.X, (int)playerLocation.Y, width, height);
+            playerRectangle = new Rectangle(0, 0, width, height);
         }
 
         //Updates the player every frame
@@ -161,8 +161,8 @@ namespace SpaceGame
         //Boost in a direction
         private void boostDirection(float x, float y)
         {
-            playerVelocity.X += playerBoostVelocity * x;
-            playerVelocity.Y += playerBoostVelocity * (-1 * y);
+            playerVelocity.X += PLAYERBOOSTVELOCITY * x;
+            playerVelocity.Y += PLAYERBOOSTVELOCITY * (-1 * y);
         }
 
         public Rectangle getPlayerRectangle()
@@ -192,12 +192,19 @@ namespace SpaceGame
             // for loop here for multiple gravity wells
             //calcGPlayerVectortAcceleration(300, 300, 10000);
             */
-            for (int i = 1; i < gravityList.Count(); i++)
+
+            Vector2 temp = new Vector2();
+
+            for (int i = 0; i < gravityList.Count(); i++)
             {
-                Console.WriteLine("i: " + i + "\tgravity list count: " + gravityList.Count());
-                playerAcceleration = (playerThrust * playerThrustScale) /*add gravity effect here*/ + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, playerMass);
+                temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYERMASS);
+                Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYERMASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
             }
-            
+
+            playerAcceleration = (playerThrust * PLAYERTHRUSTSCALE) /*add gravity effect here*/ + temp;
+
+            temp = new Vector2();
+
             /* temporary test for 2 gravity wells (SUPER COOOOL)
             setPlayerGVectorAcceleration(gravity.calcGVectorAcceleration(700, 700, playerLocation.X, playerLocation.Y, 30000f, playerMass));
             playerAcceleration += playerGVectorAcceleration;
@@ -205,8 +212,8 @@ namespace SpaceGame
 
             playerVelocity += playerAcceleration;
 
-            playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * playerMax, playerMax);
-            playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * playerMax, playerMax);
+            playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
+            playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
         }
     }
 }

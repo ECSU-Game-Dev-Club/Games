@@ -52,7 +52,10 @@ namespace SpaceGame
         Camera camera;
 
         //GRAVITY STUFF - DELELTE ME WHEN LEVELS COME IN
-        List<Gravity> gravityList = new List<Gravity>();
+        List<Gravity> gravityList = new List<Gravity>();              //DELETE ME WHEN LEVELS COME IN
+        List<Rectangle> gravityRectangleList = new List<Rectangle>(); //DELETE ME WHEN LEVELS COME IN
+        Texture2D gravityTexture;                                     //DELETE ME WHEN LEVELS COME IN
+        float gravityWellRotation;                                    //DELETE ME WHEN LEVELS COME IN
 
         public SpaceGame()
         {
@@ -111,6 +114,8 @@ namespace SpaceGame
             //Sets the players texture to the white 1x1 png in Content
             playerTexture = Content.Load<Texture2D>("whiteTexture");
 
+            gravityTexture = Content.Load<Texture2D>("gWell");
+
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: use this.Content to load your game content here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -162,10 +167,15 @@ namespace SpaceGame
                 this.Exit();
             }
 
+            #region"DELETE ME WHEN YOU MAKE LEVELS"
+            //DELETE ME WHEN YOU MAKE LEVELS
+            gravityWellRotation += 0.1f;
             if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
             {
                 gravityList.Add(new Gravity(mouse.X, mouse.Y, 10000));
+                gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
             }
+            #endregion
 
             //Updates the player class and passes all inputs
             player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
@@ -204,6 +214,11 @@ namespace SpaceGame
             //UNCOMMENT THIS OUT TO DRAW NORMALLY WITH THE CAMERA NOT FOLLOWING THE PLAYER
             spriteBatch.Begin();
             //###################
+
+            for (int i = 0; i < gravityList.Count(); i++)
+            {
+                spriteBatch.Draw(gravityTexture, gravityList[i].getGravityLocationVector(), gravityRectangleList[i], Color.White, gravityWellRotation, new Vector2(25, 25), 1.0f, SpriteEffects.None, 0);
+            }
 
             //Drawing the player here, (the texture of the player, the location vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
             spriteBatch.Draw(playerTexture, player1.getPlayerLocation(), player1.getPlayerRectangle(), Color.White * 1f);
