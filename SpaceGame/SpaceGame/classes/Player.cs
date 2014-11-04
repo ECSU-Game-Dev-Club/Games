@@ -8,6 +8,7 @@ namespace SpaceGame
     class Player
     {
         Rectangle playerRectangle;
+        Rectangle playerPredictedRectangle;
         int width = 10;
         int height = 10;
 
@@ -56,6 +57,7 @@ namespace SpaceGame
             playerAcceleration = new Vector2(0, 0);
 
             playerRectangle = new Rectangle(0, 0, width, height);
+            playerPredictedRectangle = new Rectangle(0, 0, width / 5, height / 5);
         }
 
         //Updates the player every frame
@@ -174,6 +176,10 @@ namespace SpaceGame
         {
             return playerRectangle;
         }
+        public Rectangle getPlayerPredictedRectangle()
+        {
+            return playerPredictedRectangle;
+        }
 
         public Vector2 getPlayerVelocityVector()
         {
@@ -226,7 +232,6 @@ namespace SpaceGame
                 for (int i = 0; i < gravityList.Count(); i++)
                 {
                     pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k - 1].X, playerPredictedLocation[k - 1].Y, PLAYERMASS);
-                    //Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYERMASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
                 }
 
                 playerPredictedAcceleration[k] = pTemp;
@@ -236,7 +241,7 @@ namespace SpaceGame
 
                 playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
                 playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
-                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k - 1];
+                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
             }
         }
     }

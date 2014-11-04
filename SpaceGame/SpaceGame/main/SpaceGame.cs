@@ -172,7 +172,7 @@ namespace SpaceGame
             gravityWellRotation -= 0.1f;
             if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
             {
-                gravityList.Add(new Gravity(mouse.X, mouse.Y, 10000));
+                gravityList.Add(new Gravity(mouse.X, mouse.Y, 20000));
                 gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
             }
             #endregion
@@ -221,13 +221,13 @@ namespace SpaceGame
             }
 
             //Drawing the player here, (the texture of the player, the location vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
-            spriteBatch.Draw(playerTexture, player1.getPlayerLocation(), player1.getPlayerRectangle(), Color.White * 1f);
-
+            
             for (int k = 0; k < 240; k++)
             {
-                spriteBatch.Draw(playerTexture, player1.getPlayerPredictedLocation(k), player1.getPlayerRectangle(), Color.White * 1f);
+                spriteBatch.Draw(playerTexture, player1.getPlayerPredictedLocation(k), player1.getPlayerPredictedRectangle(), Color.Green * 1f);
             }
 
+            spriteBatch.Draw(playerTexture, player1.getPlayerLocation(), player1.getPlayerRectangle(), Color.White * 1f);
                 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 // DRAW EVERYTHING IN HERE!!!!!!!!!
                 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
