@@ -230,14 +230,13 @@ namespace SpaceGame
                 }
 
                 playerPredictedAcceleration[k] = pTemp;
-
+                playerPredictedVelocity[k] = playerPredictedVelocity[k - 1] + playerPredictedAcceleration[k];
+                
                 pTemp = new Vector2();
-
-                playerPredictedVelocity[k] += playerPredictedAcceleration[k];
 
                 playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
                 playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
-                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
+                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k - 1];
             }
         }
     }
