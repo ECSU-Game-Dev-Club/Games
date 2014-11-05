@@ -222,7 +222,7 @@ namespace SpaceGame
 
             //Drawing the player here, (the texture of the player, the location vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
             
-            for (int k = 0; k < 240; k++)
+            for (int k = 0; k < 2400; k++)
             {
                 spriteBatch.Draw(playerTexture, player1.getPlayerPredictedLocation(k), player1.getPlayerPredictedRectangle(), Color.Green * 1f);
             }

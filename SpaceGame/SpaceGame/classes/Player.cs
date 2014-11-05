@@ -27,9 +27,9 @@ namespace SpaceGame
         Vector2 playerAcceleration;
 
         //predictive 
-        Vector2[] playerPredictedLocation = new Vector2[240];
-        Vector2[] playerPredictedVelocity = new Vector2[240];
-        Vector2[] playerPredictedAcceleration = new Vector2[240];
+        Vector2[] playerPredictedLocation = new Vector2[2400];
+        Vector2[] playerPredictedVelocity = new Vector2[2400];
+        Vector2[] playerPredictedAcceleration = new Vector2[2400];
 
         //Player mass
         const double PLAYERMASS = 1;
@@ -217,21 +217,23 @@ namespace SpaceGame
 
             playerVelocity += playerAcceleration;
 
-            playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
-            playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
+            //playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
+            //playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
 
             //predictive path
             playerPredictedLocation[0] = playerLocation;
             playerPredictedVelocity[0] = playerVelocity;
             playerPredictedAcceleration[0] = playerAcceleration;
 
-            for (int k = 1; k < 240; k++)
+            for (int k = 1; k < 2400; k++)
             {
                 Vector2 pTemp = new Vector2();
-
+                //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
+                //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
+                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
                 for (int i = 0; i < gravityList.Count(); i++)
                 {
-                    pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k - 1].X, playerPredictedLocation[k - 1].Y, PLAYERMASS);
+                    pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k].X, playerPredictedLocation[k].Y, PLAYERMASS);
                 }
 
                 playerPredictedAcceleration[k] = pTemp;
@@ -239,9 +241,7 @@ namespace SpaceGame
                 
                 pTemp = new Vector2();
 
-                playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
-                playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
-                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
+                
             }
         }
     }
