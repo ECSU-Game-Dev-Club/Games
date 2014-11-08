@@ -87,7 +87,7 @@ namespace SpaceGame
         protected override void Initialize()
         {
             //Initializes the player class for player1 with the spawn at 
-            player1 = new Player(500, 500);
+            player1 = new Player(500, 500, Services);
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
@@ -157,7 +157,7 @@ namespace SpaceGame
             #endregion
 
             //Gets both gamepad and keyboard states(what buttons are pressed)
-            gamePad1 = GamePad.GetState(PlayerIndex.One);
+            gamePad1 = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
             keyboard = Keyboard.GetState();
             mouse = Mouse.GetState();
 
@@ -167,12 +167,18 @@ namespace SpaceGame
                 this.Exit();
             }
 
+            //toggle Fullscreen
+            if ((keyboard.IsKeyUp(Keys.F11) && keyboard_OLDSTATE.IsKeyDown(Keys.F11)))
+            {
+                graphics.ToggleFullScreen();
+            }
+
+            //Gravity wells with a click of mouse1
             #region"DELETE ME WHEN YOU MAKE LEVELS"
-            //DELETE ME WHEN YOU MAKE LEVELS
             gravityWellRotation -= 0.1f;
             if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
             {
-                gravityList.Add(new Gravity(mouse.X, mouse.Y, 20000));
+                gravityList.Add(new Gravity(mouse.X + camera.getCameraCenter().X, mouse.Y + camera.getCameraCenter().Y, 25000));
                 gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
             }
             #endregion
@@ -181,7 +187,7 @@ namespace SpaceGame
             player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
 
             //Updates camera by passing the players rectangle and gametime
-            camera.Update(player1.getPlayerVelocityVector());
+            camera.Update(player1.getPlayerLocation());
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your update logic here
@@ -207,32 +213,30 @@ namespace SpaceGame
             GraphicsDevice.Clear(Color.Black);
 
             //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
-            //spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
 
             //Begins the sprite batch so we can draw things on the screen(DEFAULT)
             //###################
             //UNCOMMENT THIS OUT TO DRAW NORMALLY WITH THE CAMERA NOT FOLLOWING THE PLAYER
-            spriteBatch.Begin();
+            //spriteBatch.Begin();
             //###################
 
+            //Draws gravity wells
+            #region"DELETE ME WHEN LEVELS COME IN"
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 spriteBatch.Draw(gravityTexture, gravityList[i].getGravityLocationVector(), gravityRectangleList[i], Color.White, gravityWellRotation, new Vector2(25, 25), 1.0f, SpriteEffects.None, 0);
             }
+            #endregion
 
-            //Drawing the player here, (the texture of the player, the location vector of the player, the rectangle of the player, the color is black (0.0f - 1.0f for transparency)
-            
-            for (int k = 0; k < 2400; k++)
-            {
-                spriteBatch.Draw(playerTexture, player1.getPlayerPredictedLocation(k), player1.getPlayerPredictedRectangle(), Color.Green * 1f);
-            }
+            //Draw everything in player class
+            player1.Draw(spriteBatch);
 
-            spriteBatch.Draw(playerTexture, player1.getPlayerLocation(), player1.getPlayerRectangle(), Color.White * 1f);
-                //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                // DRAW EVERYTHING IN HERE!!!!!!!!!
-                //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            // DRAW EVERYTHING IN HERE!!!!!!!!!
+            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-                spriteBatch.End();
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }

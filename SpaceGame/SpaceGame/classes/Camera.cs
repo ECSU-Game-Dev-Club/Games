@@ -49,5 +49,10 @@ namespace SpaceGame
                         Matrix.CreateScale(zoom, zoom, 0) *
                         Matrix.CreateTranslation(new Vector3(origin, 0.0f));
         }
+
+        public Vector2 getCameraCenter()
+        {
+            return center;
+        }
     }
 }

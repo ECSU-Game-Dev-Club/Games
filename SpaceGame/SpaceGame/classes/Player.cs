@@ -2,15 +2,33 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
+
 namespace SpaceGame
 {
     class Player
     {
         Rectangle playerRectangle;
         Rectangle playerPredictedRectangle;
-        int width = 10;
-        int height = 10;
+        int width = 30;
+        int height = 30;
+
+        //Create a new content manager to load content used just by this level.
+        ContentManager content;
+
+        //Player origin(or middle of player)
+        Vector2 playerOrigin;
+
+        //Players texture
+        Texture2D playerTexture;
+        Texture2D playerThrustTexture;
+        Texture2D playerPredictionTexture;
+        Color playerColor;
 
         //Inverted Y or X?
         bool invertedY = true;
@@ -25,6 +43,8 @@ namespace SpaceGame
         //Players velocity and acceleration for calculating speed
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
+        //Player Rotation redians
+        float playerRotation;
 
         //predictive 
         Vector2[] playerPredictedLocation = new Vector2[2400];
@@ -45,10 +65,14 @@ namespace SpaceGame
         const float PLAYERMAX = 10; //NOT CORRECT   
 
         //Constructor for player, starts/initializes everything
-        public Player(float x, float y)
+        public Player(float x, float y, IServiceProvider serviceProvider)
         {
+            content = new ContentManager(serviceProvider, "Content");
+
             playerLocation.X = x;
             playerLocation.Y = y;
+
+            playerColor = Color.White;
 
             keyboardVector = new Vector2(0, 0);
 
@@ -57,7 +81,23 @@ namespace SpaceGame
             playerAcceleration = new Vector2(0, 0);
 
             playerRectangle = new Rectangle(0, 0, width, height);
-            playerPredictedRectangle = new Rectangle(0, 0, width / 5, height / 5);
+            playerPredictedRectangle = new Rectangle(0, 0, 2, 2);
+
+            playerOrigin.X = width / 2;
+            playerOrigin.Y = height / 2;
+
+            playerRotation = 0;
+
+            this.LoadContent();
+        }
+
+        private void LoadContent()
+        {
+            playerTexture = content.Load<Texture2D>("player/game_ship");
+
+            playerThrustTexture = content.Load<Texture2D>("player/game_ship_thrust");
+
+            playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
 
         //Updates the player every frame
@@ -73,7 +113,9 @@ namespace SpaceGame
             playerLocation += playerVelocity;
 
             //Updates player rectangle
-            playerRectangle = new Rectangle((int)playerLocation.X, (int)playerLocation.Y, width, height);
+            playerRectangle = new Rectangle(0, 0, width, height);
+
+            Console.WriteLine("Player Velocity: " + playerVelocity);
         }
 
         //Does player movement logic here
@@ -163,6 +205,11 @@ namespace SpaceGame
             {
                 playerThrust.X = playerThrust.X * -1;
             }
+
+            if (playerThrust.X != 0 || playerThrust.Y != 0)
+            {
+                playerRotation = (float)Math.Atan2(playerThrust.X, (-1) * playerThrust.Y);
+            }
         }
 
         //Boost in a direction
@@ -225,7 +272,7 @@ namespace SpaceGame
             playerPredictedVelocity[0] = playerVelocity;
             playerPredictedAcceleration[0] = playerAcceleration;
 
-            for (int k = 1; k < 2400; k++)
+            for (int k = 1; k < 1000; k++)
             {
                 Vector2 pTemp = new Vector2();
                 //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
@@ -238,11 +285,23 @@ namespace SpaceGame
 
                 playerPredictedAcceleration[k] = pTemp;
                 playerPredictedVelocity[k] = playerPredictedVelocity[k - 1] + playerPredictedAcceleration[k];
-                
+
                 pTemp = new Vector2();
 
-                
+
             }
+        }
+
+        public void Draw(SpriteBatch spriteBatch)
+        {
+            for (int i = 0; i < 240; i++)
+            {
+                spriteBatch.Draw(playerPredictionTexture, playerPredictedLocation[i], playerPredictedRectangle, Color.Green * 1f);
+            }
+
+            spriteBatch.Draw(playerTexture, playerLocation, playerRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+
+            spriteBatch.Draw(playerThrustTexture, playerLocation, playerRectangle, Color.White * (Math.Abs(playerThrust.X) + Math.Abs(playerThrust.Y)), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
         }
     }
 }

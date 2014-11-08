@@ -73,11 +73,6 @@ namespace SpaceGame
                 gVectorAcceleration.Y = (float)(gActualAcceleration * Math.Sin(degree * Math.PI / 180));
             }
 
-
-            //Console.Write("{0, 10}", gVectorAcceleration.X + "       ");
-            //Console.Write("{0, 10}", gVectorAcceleration.Y);
-            //Console.WriteLine(" ");
-
             return gVectorAcceleration;
         }
     }
