@@ -91,6 +91,10 @@ namespace SpaceGame
             this.LoadContent();
         }
 
+        /// <summary>
+        /// Load all content via
+        /// content pipeline
+        /// </summary>
         private void LoadContent()
         {
             playerTexture = content.Load<Texture2D>("player/game_ship");
@@ -100,7 +104,15 @@ namespace SpaceGame
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
 
-        //Updates the player every frame
+        /// <summary>
+        /// Overload of update method for players that
+        /// are not player1
+        /// </summary>
+        /// <param name="gamepad">Provides gamepad state.</param>
+        /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
+        /// /// <param name="keyboard">Provides keyboard state.</param>
+        /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
+        /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, List<Gravity> gravityList)
         {
             //Calculate acceleration
@@ -112,13 +124,47 @@ namespace SpaceGame
             //Updates player location based on velocity
             playerLocation += playerVelocity;
 
+            Console.WriteLine("Player Velocity: " + playerVelocity);
+        }
+        #region"update overload method for not player1 - Also DynamicSpawn method"
+        /// <summary>
+        /// Overload of update method for players that
+        /// are not player1
+        /// </summary>
+        /// <param name="gamepad">Provides gamepad state.(Buttons</param>
+        /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.(Buttons</param>
+        /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
+        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList)
+        {
+            //Calculate acceleration
+            calcAcceleration(gravityList);
+
+            //Updates player location based on velocity
+            playerLocation += playerVelocity;
+
             //Updates player rectangle
             playerRectangle = new Rectangle(0, 0, width, height);
 
             Console.WriteLine("Player Velocity: " + playerVelocity);
         }
+        /// <summary>
+        /// Overload of update method for players that
+        /// are not player1
+        /// </summary>
+        /// <param name="dynamicSpawn">Provides player.</param>
+        public void updateDynamicSpawn(Vector2 dynamicSpawn)
+        {
+            playerLocation = dynamicSpawn;
+        }
+        #endregion
 
-        //Does player movement logic here
+        /// <summary>
+        /// Controls the players movement
+        /// </summary>
+        /// <param name="gamepad">Provides gamepad state.</param>
+        /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
+        /// /// <param name="keyboard">Provides keyboard state.</param>
+        /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
         private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE)
         {
             #region"GamePad Movement Logic"
@@ -192,7 +238,10 @@ namespace SpaceGame
             #endregion
         }
 
-        //Which direction to thrust
+        /// <summary>
+        /// Which direction to thrust in
+        /// </summary>
+        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
         public void setThrust(Vector2 initThrust)
         {
             playerThrust = initThrust;
@@ -212,7 +261,12 @@ namespace SpaceGame
             }
         }
 
-        //Boost in a direction
+        /// <summary>
+        /// Thrust in a direction
+        ///  X(0-1) Y(0-1)
+        /// </summary>
+        /// <param name="X">Provides a float X(0-1)</param>
+        /// <param name="Y">Provides a float Y(0-1)</param>
         private void boostDirection(float x, float y)
         {
             playerVelocity.X += PLAYERBOOSTVELOCITY * x;
@@ -248,6 +302,11 @@ namespace SpaceGame
             return playerPredictedLocation[k];
         }
 
+        /// <summary>
+        /// Calculate Acceleration
+        /// and calculate predictive path
+        /// </summary>
+        /// <param name="gravityList">Provides a list of all gravity wells near you.</param>
         private void calcAcceleration(List<Gravity> gravityList)
         {
             Vector2 temp = new Vector2();
@@ -292,6 +351,11 @@ namespace SpaceGame
             }
         }
 
+        /// <summary>
+        /// Draws the player location
+        /// and draws player predicted locations
+        /// </summary>
+        /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
             for (int i = 0; i < 240; i++)

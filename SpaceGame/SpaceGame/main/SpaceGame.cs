@@ -24,19 +24,38 @@ namespace SpaceGame
         float elapsedTime = 0.0f;
         int fps = 0;
 
-        //(Public AND Static so we can see it in other classes (EX: camera))
-        //Player class with player variables and calculations
+        //Player classes with player variables, draw method, and mobility calculations
         Player player1;
+        Player player2;
+        Player player3;
+        Player player4;
+
+        //Array of player locations
+        Player[] playerArray = new Player[4];
 
         //Background class for drawing/building the background
         Background background;
 
+        #region"gamepads for all players:
         //Player1's gamepad
         GamePadState gamePad1;
         GamePadState gamePad1_OLDSTATE;
 
-        //Simple 1x1 png texture to fill the drawn square
-        Texture2D playerTexture;
+        //Player2's gamepad
+        GamePadState gamePad2;
+        GamePadState gamePad2_OLDSTATE;
+        bool isPlayerTwoPlaying = false;
+
+        //Player3's gamepad
+        GamePadState gamePad3;
+        GamePadState gamePad3_OLDSTATE;
+        bool isPlayerThreePlaying = false;
+
+        //Player4's gamepad
+        GamePadState gamePad4;
+        GamePadState gamePad4_OLDSTATE;
+        bool isPlayerFourPlaying = false;
+        #endregion
 
         //KEYBOAD
         KeyboardState keyboard;
@@ -59,6 +78,13 @@ namespace SpaceGame
         List<Rectangle> gravityRectangleList = new List<Rectangle>(); //DELETE ME WHEN LEVELS COME IN
         Texture2D gravityTexture;                                     //DELETE ME WHEN LEVELS COME IN
         float gravityWellRotation;                                    //DELETE ME WHEN LEVELS COME IN
+
+        //DELETE ME WHEN ENEMIES ARE FINISHED
+        Enemy_prototype enemy1;
+
+        #region"Developer Stuff"
+        Rectangle cameraRectangle;
+        #endregion
 
         public SpaceGame()
         {
@@ -90,7 +116,10 @@ namespace SpaceGame
         protected override void Initialize()
         {
             //Initializes the player class for player1 with the spawn at 
-            player1 = new Player(500, 500, Services);
+            player1 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
+            player2 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
+            player3 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
+            player4 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
@@ -100,6 +129,8 @@ namespace SpaceGame
 
             //Initializing background(builds stars)
             background = new Background(Services, screenSize);
+
+            enemy1 = new Enemy_prototype(1600, 1600, Services);
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
@@ -116,9 +147,6 @@ namespace SpaceGame
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            //Sets the players texture to the white 1x1 png in Content
-            playerTexture = Content.Load<Texture2D>("whiteTexture");
 
             gravityTexture = Content.Load<Texture2D>("gWell");
 
@@ -162,10 +190,33 @@ namespace SpaceGame
             Console.WriteLine(fps);
             #endregion
 
+            #region"Gets all input states"
             //Gets both gamepad and keyboard states(what buttons are pressed)
             gamePad1 = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
+            gamePad2 = GamePad.GetState(PlayerIndex.Two, GamePadDeadZone.Circular);
+            gamePad3 = GamePad.GetState(PlayerIndex.Three, GamePadDeadZone.Circular);
+            gamePad4 = GamePad.GetState(PlayerIndex.Four, GamePadDeadZone.Circular);
             keyboard = Keyboard.GetState();
             mouse = Mouse.GetState();
+            #endregion
+
+            #region"Checks if a player wants to play(Press Start)"
+            //Player2
+            if (gamePad2.IsButtonUp(Buttons.Start) && gamePad2.IsButtonDown(Buttons.Start))
+            {
+                isPlayerTwoPlaying = !isPlayerTwoPlaying;
+            }
+            //Player3
+            if (gamePad3.IsButtonUp(Buttons.Start) && gamePad3.IsButtonDown(Buttons.Start))
+            {
+                isPlayerThreePlaying = !isPlayerTwoPlaying;
+            }
+            //Player4
+            if (gamePad4.IsButtonUp(Buttons.Start) && gamePad4.IsButtonDown(Buttons.Start))
+            {
+                isPlayerFourPlaying = !isPlayerTwoPlaying;
+            }
+            #endregion
 
             // Allows the game to exit, by pressing back on gamepad OR escape on keyboard
             if (gamePad1.Buttons.Back == ButtonState.Pressed || keyboard.IsKeyDown(Keys.Escape))
@@ -189,8 +240,36 @@ namespace SpaceGame
             }
             #endregion
 
-            //Updates the player class and passes all inputs
+            #region"Updates all players"
+            //Updates the player1 class and passes all inputs
             player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+
+            if (isPlayerTwoPlaying)
+            {
+                //Updates the player2 class and passes all inputs
+                player2.update(gamePad2, gamePad2_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+            }
+            player2.updateDynamicSpawn(player1.getPlayerLocation());
+
+            if (isPlayerThreePlaying)
+            {
+                //Updates the player2 class and passes all inputs
+                player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+            }
+            player3.updateDynamicSpawn(player1.getPlayerLocation());
+
+            if (isPlayerFourPlaying)
+            {
+                //Updates the player2 class and passes all inputs
+                player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+            }
+            player4.updateDynamicSpawn(player1.getPlayerLocation());
+
+            playerArray[0] = player1;
+            playerArray[1] = player2;
+            playerArray[2] = player3;
+            playerArray[3] = player4;
+            #endregion
 
             //Updates camera by passing the players rectangle and gametime
             camera.Update(player1.getPlayerLocation());
@@ -199,6 +278,10 @@ namespace SpaceGame
             background.Update();
 
             #region"Dev Stuff"
+            cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
+
+            enemy1.update(gravityList, playerArray);
+
             if (keyboard.IsKeyDown(Keys.OemOpenBrackets))
             {
                 camera.zoomIncriment();
@@ -213,10 +296,16 @@ namespace SpaceGame
             // TODO: Add your update logic here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+            #region"Gets all old inputs - ALWAYS AT BOTTOM"
             //PREVIOUS FRAME GAMEPAD AND KEYBOARD STATES - Always put at bottom
             gamePad1_OLDSTATE = gamePad1;
+            gamePad1_OLDSTATE = gamePad2;
+            gamePad1_OLDSTATE = gamePad3;
+            gamePad1_OLDSTATE = gamePad4;
+
             keyboard_OLDSTATE = keyboard;
             mouse_OLDSTATE = mouse;
+            #endregion
 
             base.Update(gameTime);
         }
@@ -235,25 +324,42 @@ namespace SpaceGame
             //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
 
-            //Begins the sprite batch so we can draw things on the screen(DEFAULT)
-            //###################
-            //UNCOMMENT THIS OUT TO DRAW NORMALLY WITH THE CAMERA NOT FOLLOWING THE PLAYER
-            //spriteBatch.Begin();
-            //###################
+            //BACKGROUND SHOULD BE DRAWN FIRST SO IT IS DRAWN IN THE BACKGROUND
+            background.Draw(spriteBatch);
 
-            //Draws gravity wells
-            #region"DELETE ME WHEN LEVELS COME IN"
+            #region"Draws gravity wells - DELETE ME WHEN LEVELS COME IN"
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 spriteBatch.Draw(gravityTexture, gravityList[i].getGravityLocationVector(), gravityRectangleList[i], Color.White, gravityWellRotation, new Vector2(25, 25), 1.0f, SpriteEffects.None, 0);
             }
             #endregion
 
-            //BACKGROUND SHOULD BE DRAWN FIRST SO IT IS DRAWN IN THE BACKGROUND
-            background.Draw(spriteBatch);
+            enemy1.Draw(spriteBatch);
 
-            //Draw everything in player class
+            #region"Draw all players"
+            //Draw everything in player1 class
             player1.Draw(spriteBatch);
+
+            //Draw everything in player2 class
+            if (isPlayerTwoPlaying)
+            {
+                player2.Draw(spriteBatch);
+            }
+
+            //Draw everything in player3 class
+            if (isPlayerThreePlaying)
+            {
+                player3.Draw(spriteBatch);
+            }
+
+            //Draw everything in player4 class
+            if (isPlayerFourPlaying)
+            {
+                player4.Draw(spriteBatch);
+            }
+            #endregion
+
+            //spriteBatch.Draw(playerTexture, cameraRectangle, Color.White); //DEV            
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // DRAW EVERYTHING IN HERE!!!!!!!!!
