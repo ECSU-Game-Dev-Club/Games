@@ -209,12 +209,12 @@ namespace SpaceGame
             //Player3
             if (gamePad3.IsButtonUp(Buttons.Start) && gamePad3.IsButtonDown(Buttons.Start))
             {
-                isPlayerThreePlaying = !isPlayerTwoPlaying;
+                isPlayerThreePlaying = !isPlayerThreePlaying;
             }
             //Player4
             if (gamePad4.IsButtonUp(Buttons.Start) && gamePad4.IsButtonDown(Buttons.Start))
             {
-                isPlayerFourPlaying = !isPlayerTwoPlaying;
+                isPlayerFourPlaying = !isPlayerFourPlaying;
             }
             #endregion
 
@@ -247,21 +247,21 @@ namespace SpaceGame
             if (isPlayerTwoPlaying)
             {
                 //Updates the player2 class and passes all inputs
-                player2.update(gamePad2, gamePad2_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList);
             }
             player2.updateDynamicSpawn(player1.getPlayerLocation());
 
             if (isPlayerThreePlaying)
             {
                 //Updates the player2 class and passes all inputs
-                player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+                player3.update(gamePad3, gamePad3_OLDSTATE, gravityList);
             }
             player3.updateDynamicSpawn(player1.getPlayerLocation());
 
             if (isPlayerFourPlaying)
             {
                 //Updates the player2 class and passes all inputs
-                player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+                player4.update(gamePad4, gamePad4_OLDSTATE, gravityList);
             }
             player4.updateDynamicSpawn(player1.getPlayerLocation());
 
@@ -299,9 +299,9 @@ namespace SpaceGame
             #region"Gets all old inputs - ALWAYS AT BOTTOM"
             //PREVIOUS FRAME GAMEPAD AND KEYBOARD STATES - Always put at bottom
             gamePad1_OLDSTATE = gamePad1;
-            gamePad1_OLDSTATE = gamePad2;
-            gamePad1_OLDSTATE = gamePad3;
-            gamePad1_OLDSTATE = gamePad4;
+            gamePad2_OLDSTATE = gamePad2;
+            gamePad3_OLDSTATE = gamePad3;
+            gamePad4_OLDSTATE = gamePad4;
 
             keyboard_OLDSTATE = keyboard;
             mouse_OLDSTATE = mouse;
