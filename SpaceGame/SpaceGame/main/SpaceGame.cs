@@ -80,7 +80,7 @@ namespace SpaceGame
         float gravityWellRotation;                                    //DELETE ME WHEN LEVELS COME IN
 
         //DELETE ME WHEN ENEMIES ARE FINISHED
-        Enemy_prototype enemy1;
+        List<Enemy_prototype> enemyList = new List<Enemy_prototype>();
 
         #region"Developer Stuff"
         Rectangle cameraRectangle;
@@ -129,8 +129,6 @@ namespace SpaceGame
 
             //Initializing background(builds stars)
             background = new Background(Services, screenSize);
-
-            enemy1 = new Enemy_prototype(1600, 1600, Services);
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
@@ -238,6 +236,11 @@ namespace SpaceGame
                 gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 25000));
                 gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
             }
+
+            if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
+            {
+                enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+            }
             #endregion
 
             #region"Updates all players"
@@ -293,7 +296,10 @@ namespace SpaceGame
             #region"Dev Stuff"
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
 
-            enemy1.update(gravityList, playerArray);
+            for (int i = 0; i < enemyList.Count; i++)
+            {
+                enemyList[i].update(gravityList, playerArray);
+            }
 
             if (keyboard.IsKeyDown(Keys.OemOpenBrackets))
             {
@@ -356,11 +362,14 @@ namespace SpaceGame
             }
             #endregion
 
-            enemy1.Draw(spriteBatch);
+            for (int i = 0; i < enemyList.Count; i++)
+            {
+                enemyList[i].Draw(spriteBatch);
+            }
 
-            #region"Draw all players"
-            //Draw everything in player1 class
-            player1.Draw(spriteBatch);
+                #region"Draw all players"
+                //Draw everything in player1 class
+                player1.Draw(spriteBatch);
 
             //Draw everything in player2 class
             if (isPlayerTwoPlaying)

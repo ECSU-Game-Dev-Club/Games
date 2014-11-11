@@ -65,13 +65,13 @@ namespace SpaceGame
         #region"Prediction/Previous Variables"
 
         //Prediction
-        const int MAX_PREDICTED_FRAMES = 2400;
+        const int MAX_PREDICTED_FRAMES = 1000;
         Vector2[] playerPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
         Vector2[] playerPredictedVelocity = new Vector2[MAX_PREDICTED_FRAMES];
         Vector2[] playerPredictedAcceleration = new Vector2[MAX_PREDICTED_FRAMES];
 
         //Previous
-        const int MAX_PREVIOUS_FRAMES = 100;
+        const int MAX_PREVIOUS_FRAMES = 500;
         int currentFrame = 0;
         Vector2[] playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
         #endregion
