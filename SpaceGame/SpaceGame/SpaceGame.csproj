@@ -75,6 +75,7 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="classes\Background.cs" />
     <Compile Include="classes\Camera.cs" />
     <Compile Include="classes\Gravity.cs" />
     <Compile Include="classes\Player.cs" />

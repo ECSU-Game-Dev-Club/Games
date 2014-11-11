@@ -28,6 +28,9 @@ namespace SpaceGame
         //Player class with player variables and calculations
         Player player1;
 
+        //Background class for drawing/building the background
+        Background background;
+
         //Player1's gamepad
         GamePadState gamePad1;
         GamePadState gamePad1_OLDSTATE;
@@ -44,7 +47,7 @@ namespace SpaceGame
         MouseState mouse_OLDSTATE;
 
         //Setting up a rectangle for the users screen size
-        Rectangle ScreenSize;
+        Rectangle screenSize;
         //Is the game in fullscreen mode
         bool isFullScreen = false;
 
@@ -65,10 +68,10 @@ namespace SpaceGame
             //Sets the buffer(res) to the hardware res/ and gives it to a rectangle
             //X
             graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-            ScreenSize.Width = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            screenSize.Width = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
             //Y
             graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-            ScreenSize.Height = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+            screenSize.Height = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
             //Is the game multisampling
             graphics.PreferMultiSampling = false;
 
@@ -94,6 +97,9 @@ namespace SpaceGame
 
             //Initializing Mouse
             mouse = Mouse.GetState();
+
+            //Initializing background(builds stars)
+            background = new Background(Services, screenSize);
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your initialization logic here
@@ -178,7 +184,7 @@ namespace SpaceGame
             gravityWellRotation -= 0.1f;
             if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
             {
-                gravityList.Add(new Gravity(mouse.X + camera.getCameraCenter().X, mouse.Y + camera.getCameraCenter().Y, 25000));
+                gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 25000));
                 gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
             }
             #endregion
@@ -188,6 +194,20 @@ namespace SpaceGame
 
             //Updates camera by passing the players rectangle and gametime
             camera.Update(player1.getPlayerLocation());
+
+            //Updates background(Stars snap with camera)
+            background.Update();
+
+            #region"Dev Stuff"
+            if (keyboard.IsKeyDown(Keys.OemOpenBrackets))
+            {
+                camera.zoomIncriment();
+            }
+            if (keyboard.IsKeyDown(Keys.OemCloseBrackets))
+            {
+                camera.zoomDecriment();
+            }
+            #endregion
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: Add your update logic here
@@ -228,6 +248,9 @@ namespace SpaceGame
                 spriteBatch.Draw(gravityTexture, gravityList[i].getGravityLocationVector(), gravityRectangleList[i], Color.White, gravityWellRotation, new Vector2(25, 25), 1.0f, SpriteEffects.None, 0);
             }
             #endregion
+
+            //BACKGROUND SHOULD BE DRAWN FIRST SO IT IS DRAWN IN THE BACKGROUND
+            background.Draw(spriteBatch);
 
             //Draw everything in player class
             player1.Draw(spriteBatch);
