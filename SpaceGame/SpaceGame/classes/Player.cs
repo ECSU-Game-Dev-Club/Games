@@ -21,7 +21,7 @@ namespace SpaceGame
         //Create a new content manager to load content used just by this level.
         ContentManager content;
 
-        //Player origin(or middle of player)
+        //Player origin(or middle of player texture)
         Vector2 playerOrigin;
 
         //Players texture
@@ -40,29 +40,41 @@ namespace SpaceGame
         //Players location
         Vector2 playerLocation;
 
+        //Players vector2 location delta
+        Vector2 playerLocationDelta;
+
+        #region"Movement Variables"
+
         //Players velocity and acceleration for calculating speed
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
         //Player Rotation redians
         float playerRotation;
 
-        //predictive 
-        Vector2[] playerPredictedLocation = new Vector2[2400];
-        Vector2[] playerPredictedVelocity = new Vector2[2400];
-        Vector2[] playerPredictedAcceleration = new Vector2[2400];
-
-        //Player mass
-        const double PLAYERMASS = 1;
-
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
-        const float PLAYERTHRUSTSCALE = .1f;
+        const float PLAYER_THRUST_SCALE = .1f;
 
         //Player Boost Velocity
-        const float PLAYERBOOSTVELOCITY = 5;
+        const float PLAYER_BOOST_VELOCITY = 5;
 
-        //Maximum player speed
-        const float PLAYERMAX = 10; //NOT CORRECT   
+        //Player mass
+        const double PLAYER_MASS = 1;
+        #endregion
+
+        #region"Prediction/Previous Variables"
+
+        //Prediction
+        const int MAX_PREDICTED_FRAMES = 2400;
+        Vector2[] playerPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
+        Vector2[] playerPredictedVelocity = new Vector2[MAX_PREDICTED_FRAMES];
+        Vector2[] playerPredictedAcceleration = new Vector2[MAX_PREDICTED_FRAMES];
+
+        //Previous
+        const int MAX_PREVIOUS_FRAMES = 100;
+        int currentFrame = 0;
+        Vector2[] playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
+        #endregion
 
         //Constructor for player, starts/initializes everything
         public Player(float x, float y, IServiceProvider serviceProvider)
@@ -115,6 +127,8 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, List<Gravity> gravityList)
         {
+            currentFrame++;
+
             //Calculate acceleration
             calcAcceleration(gravityList);
 
@@ -125,6 +139,13 @@ namespace SpaceGame
             playerLocation += playerVelocity;
 
             Console.WriteLine("Player Velocity: " + playerVelocity);
+
+            calculatePreviousLocation();
+
+            if (currentFrame == MAX_PREVIOUS_FRAMES)
+            {
+                currentFrame = 0;
+            }
         }
         #region"update overload method for not player1 - Also DynamicSpawn method"
         /// <summary>
@@ -269,8 +290,46 @@ namespace SpaceGame
         /// <param name="Y">Provides a float Y(0-1)</param>
         private void boostDirection(float x, float y)
         {
-            playerVelocity.X += PLAYERBOOSTVELOCITY * x;
-            playerVelocity.Y += PLAYERBOOSTVELOCITY * (-1 * y);
+            playerVelocity.X += PLAYER_BOOST_VELOCITY * x;
+            playerVelocity.Y += PLAYER_BOOST_VELOCITY * (-1 * y);
+        }
+
+        private void calculatePreviousLocation()
+        {
+            playerPreviousLocation[currentFrame - 1] = playerLocation;
+
+            if (currentFrame != 1)
+            {
+                playerLocationDelta.X = playerPreviousLocation[currentFrame - 1].X - playerPreviousLocation[currentFrame - 2].X;
+                playerLocationDelta.Y = playerPreviousLocation[currentFrame - 1].Y - playerPreviousLocation[currentFrame - 2].Y;
+            }
+        }
+
+        private void calculatePrediction(List<Gravity> gravityList)
+        {
+            //predictive path
+            playerPredictedLocation[0] = playerLocation;
+            playerPredictedVelocity[0] = playerVelocity;
+            playerPredictedAcceleration[0] = playerAcceleration;
+
+            for (int k = 1; k < MAX_PREDICTED_FRAMES; k++)
+            {
+                Vector2 pTemp = new Vector2();
+                //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
+                //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
+                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
+                for (int i = 0; i < gravityList.Count(); i++)
+                {
+                    pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k].X, playerPredictedLocation[k].Y, PLAYER_MASS);
+                }
+
+                playerPredictedAcceleration[k] = pTemp;
+                playerPredictedVelocity[k] = playerPredictedVelocity[k - 1] + playerPredictedAcceleration[k];
+
+                pTemp = new Vector2();
+
+
+            }
         }
 
         public Rectangle getPlayerRectangle()
@@ -285,6 +344,11 @@ namespace SpaceGame
         public Vector2 getPlayerVelocityVector()
         {
             return playerVelocity;
+        }
+
+        public Vector2 getPlayerLocationDelta()
+        {
+            return playerLocationDelta;
         }
 
         public Vector2 getPlayerAccelerationVector()
@@ -313,11 +377,11 @@ namespace SpaceGame
 
             for (int i = 0; i < gravityList.Count(); i++)
             {
-                temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYERMASS);
-                Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYERMASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
+                temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
+                Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
             }
 
-            playerAcceleration = (playerThrust * PLAYERTHRUSTSCALE) /*add gravity effect here*/ + temp;
+            playerAcceleration = (playerThrust * PLAYER_THRUST_SCALE) /*add gravity effect here*/ + temp;
 
             temp = new Vector2();
 
@@ -326,29 +390,8 @@ namespace SpaceGame
             //playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
             //playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
 
-            //predictive path
-            playerPredictedLocation[0] = playerLocation;
-            playerPredictedVelocity[0] = playerVelocity;
-            playerPredictedAcceleration[0] = playerAcceleration;
+            this.calculatePrediction(gravityList);
 
-            for (int k = 1; k < 1000; k++)
-            {
-                Vector2 pTemp = new Vector2();
-                //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
-                //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
-                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
-                for (int i = 0; i < gravityList.Count(); i++)
-                {
-                    pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k].X, playerPredictedLocation[k].Y, PLAYERMASS);
-                }
-
-                playerPredictedAcceleration[k] = pTemp;
-                playerPredictedVelocity[k] = playerPredictedVelocity[k - 1] + playerPredictedAcceleration[k];
-
-                pTemp = new Vector2();
-
-
-            }
         }
 
         /// <summary>
@@ -358,7 +401,14 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            for (int i = 0; i < 240; i++)
+            //UNCOMMENT FOR PREVIOUS PLAYER LOCATIONS(trails)
+            for (int i = 0; i < MAX_PREVIOUS_FRAMES; i++)
+            {
+                spriteBatch.Draw(playerPredictionTexture, playerPreviousLocation[i], playerPredictedRectangle, Color.Purple * 1f);
+            }
+
+
+            for (int i = 0; i < MAX_PREDICTED_FRAMES; i++)
             {
                 spriteBatch.Draw(playerPredictionTexture, playerPredictedLocation[i], playerPredictedRectangle, Color.Green * 1f);
             }

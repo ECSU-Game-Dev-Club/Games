@@ -241,29 +241,42 @@ namespace SpaceGame
             #endregion
 
             #region"Updates all players"
+
             //Updates the player1 class and passes all inputs
             player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
 
+            //If player 2 is playing
             if (isPlayerTwoPlaying)
             {
                 //Updates the player2 class and passes all inputs
                 player2.update(gamePad2, gamePad2_OLDSTATE, gravityList);
             }
-            player2.updateDynamicSpawn(player1.getPlayerLocation());
+            else
+            {
+                player2.updateDynamicSpawn(player1.getPlayerLocation());
+            }
 
+            //If player 3 is playing
             if (isPlayerThreePlaying)
             {
-                //Updates the player2 class and passes all inputs
+                //Updates the player3 class and passes all inputs
                 player3.update(gamePad3, gamePad3_OLDSTATE, gravityList);
             }
-            player3.updateDynamicSpawn(player1.getPlayerLocation());
+            else
+            {
+                player3.updateDynamicSpawn(player1.getPlayerLocation());
+            }
 
+            //If player 4 is playing
             if (isPlayerFourPlaying)
             {
-                //Updates the player2 class and passes all inputs
+                //Updates the player4 class and passes all inputs
                 player4.update(gamePad4, gamePad4_OLDSTATE, gravityList);
             }
-            player4.updateDynamicSpawn(player1.getPlayerLocation());
+            else
+            {
+                player4.updateDynamicSpawn(player1.getPlayerLocation());
+            }
 
             playerArray[0] = player1;
             playerArray[1] = player2;
@@ -275,7 +288,7 @@ namespace SpaceGame
             camera.Update(player1.getPlayerLocation());
 
             //Updates background(Stars snap with camera)
-            background.Update();
+            background.Update(player1.getPlayerLocationDelta());
 
             #region"Dev Stuff"
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
@@ -321,11 +334,20 @@ namespace SpaceGame
 
             GraphicsDevice.Clear(Color.Black);
 
+            #region"Static drawing"
+            //STATIC DRAW
+            spriteBatch.Begin();
+
+            //Draw background stars as static
+            background.DrawBackgroundStars(spriteBatch);
+
+            spriteBatch.End();
+            #endregion
+
             //Begins the sprite batch so we can draw things on the screen(USING CAMERA)
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.transform);
 
-            //BACKGROUND SHOULD BE DRAWN FIRST SO IT IS DRAWN IN THE BACKGROUND
-            background.Draw(spriteBatch);
+            background.DrawForegroundStars(spriteBatch);
 
             #region"Draws gravity wells - DELETE ME WHEN LEVELS COME IN"
             for (int i = 0; i < gravityList.Count(); i++)
