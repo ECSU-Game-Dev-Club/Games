@@ -15,8 +15,8 @@ namespace SpaceGame
     {
         Rectangle enemyRectangle;
         Rectangle enemyPredictedRectangle;
-        int width = 10;
-        int height = 10;
+        int width = 20;
+        int height = 20;
 
         //Create a new content manager to load content used just by this level.
         ContentManager content;
