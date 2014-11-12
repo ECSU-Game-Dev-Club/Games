@@ -200,17 +200,17 @@ namespace SpaceGame
 
             #region"Checks if a player wants to play(Press Start)"
             //Player2
-            if (gamePad2.IsButtonUp(Buttons.Start) && gamePad2.IsButtonDown(Buttons.Start))
+            if (gamePad2.IsButtonUp(Buttons.Start) && gamePad2_OLDSTATE.IsButtonDown(Buttons.Start))
             {
                 isPlayerTwoPlaying = !isPlayerTwoPlaying;
             }
             //Player3
-            if (gamePad3.IsButtonUp(Buttons.Start) && gamePad3.IsButtonDown(Buttons.Start))
+            if (gamePad3.IsButtonUp(Buttons.Start) && gamePad3_OLDSTATE.IsButtonDown(Buttons.Start))
             {
                 isPlayerThreePlaying = !isPlayerThreePlaying;
             }
             //Player4
-            if (gamePad4.IsButtonUp(Buttons.Start) && gamePad4.IsButtonDown(Buttons.Start))
+            if (gamePad4.IsButtonUp(Buttons.Start) && gamePad4_OLDSTATE.IsButtonDown(Buttons.Start))
             {
                 isPlayerFourPlaying = !isPlayerFourPlaying;
             }
