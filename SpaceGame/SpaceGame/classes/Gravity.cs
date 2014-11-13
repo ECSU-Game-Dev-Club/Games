@@ -15,6 +15,8 @@ namespace SpaceGame
         double gLocationX;
         double gLocationY;
 
+        double gRadius;
+        double gInfluenceRadius;
         double distance;
         double degree;
         //actualAcceleration is the acceleration as a 1D value
@@ -31,6 +33,9 @@ namespace SpaceGame
             gLocationY = y;
 
             gLocationVector = new Vector2((float)x, (float)y);
+            gRadius = initMass / 150;
+
+
         }
 
         public double getGravityLocationX()
@@ -47,7 +52,15 @@ namespace SpaceGame
         {
             return gLocationVector;
         }
+        public double getDistance()
+        {
+            return distance;
+        }
 
+        public double distanceCalc(float x1, float y1, float x2, float y2)
+        {
+            return Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
+        }
         //calculates gravitational pull of xy1 on xy2
         public Vector2 calcGVectorAcceleration(double x2, double y2, double mass2)
         {
