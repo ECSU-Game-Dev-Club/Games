@@ -367,9 +367,9 @@ namespace SpaceGame
                 enemyList[i].Draw(spriteBatch);
             }
 
-                #region"Draw all players"
-                //Draw everything in player1 class
-                player1.Draw(spriteBatch);
+            #region"Draw all players"
+            //Draw everything in player1 class
+            player1.Draw(spriteBatch);
 
             //Draw everything in player2 class
             if (isPlayerTwoPlaying)

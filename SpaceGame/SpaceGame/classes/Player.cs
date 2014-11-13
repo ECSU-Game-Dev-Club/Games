@@ -34,6 +34,9 @@ namespace SpaceGame
         bool invertedY = true;
         bool invertedX = false;
 
+        //Player Did Not Press Start(Not Player1)
+        bool playerReady = false;
+
         //Keyboard vector(used to help smooth movement on keyboard)
         Vector2 keyboardVector;
 
@@ -129,6 +132,8 @@ namespace SpaceGame
         {
             currentFrame++;
 
+            playerReady = true;
+
             //Calculate acceleration
             calcAcceleration(gravityList);
 
@@ -138,7 +143,9 @@ namespace SpaceGame
             //Updates player location based on velocity
             playerLocation += playerVelocity;
 
-            Console.WriteLine("Player Velocity: " + playerVelocity);
+            //Console.WriteLine("Player Velocity: " + playerVelocity);
+            Console.WriteLine("Player Location: " + playerLocation);
+            //Console.WriteLine("Player Acceleration: " + playerAcceleration);
 
             calculatePreviousLocation();
 
@@ -157,25 +164,16 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList)
         {
-            currentFrame++;
+            playerReady = true;
 
             //Calculate acceleration
             calcAcceleration(gravityList);
 
-            //Figure out if user wants player to move(movement logic)
-            playerControls(gamepad, gamepad_OLDSTATE);
-
             //Updates player location based on velocity
             playerLocation += playerVelocity;
 
-            Console.WriteLine("Player Velocity: " + playerVelocity);
-
-            calculatePreviousLocation();
-
-            if (currentFrame == MAX_PREVIOUS_FRAMES)
-            {
-                currentFrame = 0;
-            }
+            //Updates player rectangle
+            playerRectangle = new Rectangle(0, 0, width, height);
         }
         /// <summary>
         /// Overload of update method for players that
@@ -272,33 +270,6 @@ namespace SpaceGame
             }
             #endregion
         }
-        #region"Overload for playerControls"
-        /// <summary>
-        /// OVERLOAD METHOD
-        /// Controls the players movement
-        /// </summary>
-        /// <param name="gamepad">Provides gamepad state.</param>
-        /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
-        /// /// <param name="keyboard">Provides keyboard state.</param>
-        /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
-        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE)
-        {
-            #region"GamePad Movement Logic"
-            //If the user moves the left thumbstick(in any direction)
-            if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
-            {
-                //Pass the X and Y value to the thrust method in the Player class
-                setThrust(gamePad.ThumbSticks.Left);
-            }
-
-            //left shoulder or spacebar was clicked(pressed, then released)
-            if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
-            {
-                boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
-            }
-            #endregion
-        }
-        #endregion
 
         /// <summary>
         /// Which direction to thrust in
@@ -373,6 +344,11 @@ namespace SpaceGame
             }
         }
 
+        public bool isPlayerReady()
+        {
+            return playerReady;
+        }
+
         public Rectangle getPlayerRectangle()
         {
             return playerRectangle;
@@ -419,7 +395,7 @@ namespace SpaceGame
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
-                Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
+                //Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
             }
 
             playerAcceleration = (playerThrust * PLAYER_THRUST_SCALE) /*add gravity effect here*/ + temp;
