@@ -126,7 +126,7 @@ namespace SpaceGame
                                 //player is within radius, player is now secondary target
                                 secondaryTargetVector = players[i].getPlayerLocation();
 
-                                //This is now the target
+                                //This is now the target 
                                 targetIndex = i;
 
                                 targetAquired = true;
