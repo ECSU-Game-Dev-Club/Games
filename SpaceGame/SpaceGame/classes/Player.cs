@@ -169,6 +169,9 @@ namespace SpaceGame
             //Calculate acceleration
             calcAcceleration(gravityList);
 
+            //Figure out if user wants player to move(movement logic)
+            playerControls(gamepad, gamepad_OLDSTATE);
+
             //Updates player location based on velocity
             playerLocation += playerVelocity;
 
@@ -270,6 +273,31 @@ namespace SpaceGame
             }
             #endregion
         }
+        #region"playerControls Overload"
+        /// <summary>
+        /// Controls the players movement
+        /// </summary>
+        /// <param name="gamepad">Provides gamepad state.</param>
+        /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
+        /// /// <param name="keyboard">Provides keyboard state.</param>
+        /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
+        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE)
+        {
+            //If the user moves the left thumbstick(in any direction)
+            if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
+            {
+                //Pass the X and Y value to the thrust method in the Player class
+                setThrust(gamePad.ThumbSticks.Left);
+            }
+
+            //left shoulder or spacebar was clicked(pressed, then released)
+            if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
+            {
+                boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
+            }
+        }
+        #endregion
+
 
         /// <summary>
         /// Which direction to thrust in
