@@ -30,11 +30,6 @@ namespace SpaceGame
         Vector2 secondaryTargetVector;
         bool targetAquired;
 
-        int gTargetIndex;
-        Vector2 gTargetVector;
-        Vector2 gSecondaryTargetVector;
-        bool gTargetAquired;
-
         //Players texture
         Texture2D enemyTexture;
         Texture2D enemyPredictionTexture;
@@ -53,23 +48,23 @@ namespace SpaceGame
 
         //Enemy 
         const int TARGET_RADIUS = 400;
-        const int gTARGET_RADIUS = 400;
 
         //predictive
-        const int MAX_PREDICTED_FRAMES = 200;
+        const int MAX_PREDICTED_FRAMES = 50;
         Vector2[] enemyPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
         Vector2[] enemyPredictedVelocity = new Vector2[MAX_PREDICTED_FRAMES];
         Vector2[] enemyPredictedAcceleration = new Vector2[MAX_PREDICTED_FRAMES];
 
-        //thrust is the triggers on the gamepad
+        //thrust is the location of thumbstick left
         Vector2 enemyThrust;
+
         const float ENEMY_THRUST_SCALE = .1f;
 
         //Player Boost Velocity
         const float ENEMY_BOOST_VELOCITY = 5;
 
-        //Maximum player speed
-        const float ENEMY_MAX = 10; //NOT CORRECT   
+        //DEVELOPER FUN COMMANDS
+        const bool ENEMIES_MERCILESS = true;
 
         //Constructor for player, starts/initializes everything
         public Enemy_prototype(float x, float y, IServiceProvider serviceProvider)
@@ -95,7 +90,6 @@ namespace SpaceGame
             secondaryTargetVector = new Vector2(0, 0);
 
             targetAquired = false;
-            gTargetAquired = false;
 
             this.LoadContent();
         }
@@ -108,46 +102,49 @@ namespace SpaceGame
         }
 
         //Updates the player every frame
-        public void update(List<Gravity> gravityList, Player[] playerLocations)
+        public void update(List<Gravity> gravityList, Player[] players)
         {
-            calcMovement(gravityList);
+            //Console.WriteLine("Player Velocity: " + enemyVelocity);
+            Console.WriteLine("Enemy Location: " + enemyLocation);
+            //Console.WriteLine("Player Acceleration: " + enemyAcceleration);
+
             #region"Get closest player"
             //If target has not been aquired
             if (!targetAquired)
             {
                 //For all players
-                for (int i = 0; i < playerLocations.Count() - 1; i++)
+                for (int i = 0; i < players.Count() - 1; i++)
                 {
-                    //If player is within radius -X-
-                    if (playerLocations[i].getPlayerLocation().X >= enemyLocation.X - TARGET_RADIUS && playerLocations[i].getPlayerLocation().X <= enemyLocation.X + TARGET_RADIUS)
+                    if (players[i].isPlayerReady())
                     {
-                        //If player is within radius -Y-
-                        if (playerLocations[i].getPlayerLocation().Y >= enemyLocation.Y - TARGET_RADIUS && playerLocations[i].getPlayerLocation().Y <= enemyLocation.Y + TARGET_RADIUS)
+                        //If player is within radius -X-
+                        if (players[i].getPlayerLocation().X >= enemyLocation.X - TARGET_RADIUS && players[i].getPlayerLocation().X <= enemyLocation.X + TARGET_RADIUS)
                         {
-                            //player is within radius, player is now secondary target
-                            secondaryTargetVector = playerLocations[i].getPlayerLocation();
-
-                            //If it is the first player
-                            if (i == 0)
+                            //If player is within radius -Y-
+                            if (players[i].getPlayerLocation().Y >= enemyLocation.Y - TARGET_RADIUS && players[i].getPlayerLocation().Y <= enemyLocation.Y + TARGET_RADIUS)
                             {
+                                //player is within radius, player is now secondary target
+                                secondaryTargetVector = players[i].getPlayerLocation();
+
                                 //This is now the target
                                 targetIndex = i;
 
                                 targetAquired = true;
-                            }
 
-                            //If player is closer to enemy than target -X-
-                            if ((playerLocations[i].getPlayerLocation().X > secondaryTargetVector.X && playerLocations[i].getPlayerLocation().X < enemyLocation.X) ||
-                                (playerLocations[i].getPlayerLocation().X <= secondaryTargetVector.X && playerLocations[i].getPlayerLocation().X > enemyLocation.X))
-                            {
-                                //If player is closer to enemy than target -Y-
-                                if ((playerLocations[i].getPlayerLocation().Y > secondaryTargetVector.Y && playerLocations[i].getPlayerLocation().Y < enemyLocation.Y) ||
-                                    (playerLocations[i].getPlayerLocation().Y <= secondaryTargetVector.Y && playerLocations[i].getPlayerLocation().Y > enemyLocation.Y))
+                                //Check if any players are closer
+                                //If player is closer to enemy than target -X-
+                                if ((players[i].getPlayerLocation().X > secondaryTargetVector.X && players[i].getPlayerLocation().X < enemyLocation.X) ||
+                                    (players[i].getPlayerLocation().X <= secondaryTargetVector.X && players[i].getPlayerLocation().X > enemyLocation.X))
                                 {
-                                    //This is now the target
-                                    targetIndex = i;
+                                    //If player is closer to enemy than target -Y-
+                                    if ((players[i].getPlayerLocation().Y > secondaryTargetVector.Y && players[i].getPlayerLocation().Y < enemyLocation.Y) ||
+                                        (players[i].getPlayerLocation().Y <= secondaryTargetVector.Y && players[i].getPlayerLocation().Y > enemyLocation.Y))
+                                    {
+                                        //This is now the target
+                                        targetIndex = i;
 
-                                    targetAquired = true;
+                                        targetAquired = true;
+                                    }
                                 }
                             }
                         }
@@ -155,18 +152,48 @@ namespace SpaceGame
                 }
             }
 
-            if ((playerLocations[targetIndex].getPlayerLocation().X < enemyLocation.X - TARGET_RADIUS || //X
-                playerLocations[targetIndex].getPlayerLocation().X > enemyLocation.X + TARGET_RADIUS) || //X
-
-                (playerLocations[targetIndex].getPlayerLocation().Y < enemyLocation.Y - TARGET_RADIUS || //Y
-                playerLocations[targetIndex].getPlayerLocation().Y > enemyLocation.Y + TARGET_RADIUS))   //Y
+            if (!ENEMIES_MERCILESS)
             {
-                targetAquired = false;
+                if ((players[targetIndex].getPlayerLocation().X < enemyLocation.X - TARGET_RADIUS || //X
+                    players[targetIndex].getPlayerLocation().X > enemyLocation.X + TARGET_RADIUS) || //X
+
+                    (players[targetIndex].getPlayerLocation().Y < enemyLocation.Y - TARGET_RADIUS || //Y
+                    players[targetIndex].getPlayerLocation().Y > enemyLocation.Y + TARGET_RADIUS))   //Y
+                {
+                    targetAquired = false;
+                }
             }
             #endregion
 
-            targetVector.X = playerLocations[targetIndex].getPlayerLocation().X - (playerLocations[targetIndex].getPlayerRectangle().Width / 2);
-            targetVector.Y = playerLocations[targetIndex].getPlayerLocation().Y - (playerLocations[targetIndex].getPlayerRectangle().Height / 2);
+            //If target acquired update the target vector with the targets position
+            if (targetAquired)
+            {
+                targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
+                targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
+
+                //Move toward target
+                if (targetVector.X < enemyLocation.X)
+                {
+                    enemyThrust.X = -1;
+                }
+                if (targetVector.X > enemyLocation.X)
+                {
+                    enemyThrust.X = 1;
+                }
+                if (targetVector.Y < enemyLocation.Y)
+                {
+                    enemyThrust.Y = -1;
+                }
+                if (targetVector.Y > enemyLocation.Y)
+                {
+                    enemyThrust.Y = 1;
+                }
+            }
+            else
+            {
+                targetVector.X = 0;
+                targetVector.Y = 0;
+            }
 
             calcAcceleration(gravityList);
 
@@ -177,7 +204,7 @@ namespace SpaceGame
         /// <summary>
         /// Which direction to thrust in
         /// </summary>
-        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from enemies LEFT THUMBSTICK</param>
+        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
         public void setThrust(Vector2 initThrust)
         {
             enemyThrust = initThrust;
@@ -198,7 +225,6 @@ namespace SpaceGame
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 temp += gravityList[i].calcGVectorAcceleration(enemyLocation.X, enemyLocation.Y, ENEMY_MASS);
-                Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(enemyLocation.X, enemyLocation.Y, ENEMY_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
             }
 
             enemyAcceleration = (enemyThrust * ENEMY_THRUST_SCALE) /*add gravity effect here*/ + temp;
@@ -233,104 +259,6 @@ namespace SpaceGame
             }
         }
 
-        private void calcMovement(List<Gravity> gravityList)
-        {
-            
-            if (!targetAquired)
-            {
-                if (gravityList.Count > 0)
-                {
-                    #region"Get closest grav"
-                    /*//If target has not been aquired
-                    if (!gTargetAquired)
-                    {
-                        //For all players
-                        for (int i = 0; i < gravityList.Count() - 1; i++)
-                        {
-                            //If player is within radius -X-
-                            if (gravityList[i].getGravityLocationVector().X >= enemyLocation.X - gTARGET_RADIUS && gravityList[i].getGravityLocationVector().X <= enemyLocation.X + gTARGET_RADIUS)
-                            {
-                                //If player is within radius -Y-
-                                if (gravityList[i].getGravityLocationVector().Y >= enemyLocation.X - gTARGET_RADIUS && gravityList[i].getGravityLocationVector().Y <= enemyLocation.Y + gTARGET_RADIUS)
-                                {
-                                    //player is within radius, player is now gSecondary gTarget
-                                    gSecondaryTargetVector = gravityList[i].getGravityLocationVector();
-
-                                    //If it is the first player
-                                    
-                                    //This is now the gTarget
-                                    gTargetIndex = i;
-
-                                    gTargetAquired = true;
-                                    gTargetVector = gravityList[i].getGravityLocationVector();
-                                    
-
-                                    //If player is closer to enemy than gTarget -X-
-                                    if ((gravityList[i].getGravityLocationVector().X > gSecondaryTargetVector.X && gravityList[i].getGravityLocationVector().X < enemyLocation.X) ||
-                                        (gravityList[i].getGravityLocationVector().X < gSecondaryTargetVector.X && gravityList[i].getGravityLocationVector().X > enemyLocation.X))
-                                    {
-                                        //If player is closer to enemy than gTarget -Y-
-                                        if ((gravityList[i].getGravityLocationVector().Y > gSecondaryTargetVector.Y && gravityList[i].getGravityLocationVector().Y < enemyLocation.Y) ||
-                                            (gravityList[i].getGravityLocationVector().Y < gSecondaryTargetVector.Y && gravityList[i].getGravityLocationVector().Y > enemyLocation.Y))
-                                        {
-                                            //This is now the gTarget
-                                            gTargetIndex = i;
-
-                                            gTargetAquired = true;
-                                            gTargetVector = gravityList[i].getGravityLocationVector();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if ((gravityList[gTargetIndex].getGravityLocationVector().X < enemyLocation.X - gTARGET_RADIUS || //X
-                        gravityList[gTargetIndex].getGravityLocationVector().X > enemyLocation.X + gTARGET_RADIUS) || //X
-
-                        (gravityList[gTargetIndex].getGravityLocationVector().Y < enemyLocation.X - gTARGET_RADIUS || //Y
-                        gravityList[gTargetIndex].getGravityLocationVector().Y > enemyLocation.Y + gTARGET_RADIUS))   //Y
-                    {
-                        gTargetAquired = false;
-                    }*/
-                    #endregion 
-
-                    #region"Closest Grav Fix"
-                    for (int i = 0; i < gravityList.Count(); i++)
-                    {
-                        //If player is within radius -X-
-                        if (gravityList[i].getGravityLocationVector().X >= enemyLocation.X - gTARGET_RADIUS && gravityList[i].getGravityLocationVector().X <= enemyLocation.X + gTARGET_RADIUS)
-                        {
-                            //If player is within radius -Y-
-                            if (gravityList[i].getGravityLocationVector().Y >= enemyLocation.Y - gTARGET_RADIUS && gravityList[i].getGravityLocationVector().Y <= enemyLocation.Y + gTARGET_RADIUS)
-                            {
-                                //player is within radius, player is now gSecondary gTarget
-                                gSecondaryTargetVector = gravityList[i].getGravityLocationVector();
-
-                                //This is now the gTarget
-                                if (gravityList[i].distanceCalc(gTargetVector.X, gTargetVector.Y, gravityList[i].getGravityLocationVector().X, gravityList[i].getGravityLocationVector().Y) > gravityList[i].distanceCalc(enemyLocation.X, enemyLocation.Y, gravityList[i].getGravityLocationVector().X, gravityList[i].getGravityLocationVector().Y))
-                                {
-                                    gTargetAquired = true;
-                                    gTargetIndex = i;
-                                    gTargetVector = gravityList[i].getGravityLocationVector();
-                                }
-                            }
-                        }
-                    }
-                    
-                    if ((gravityList[gTargetIndex].getGravityLocationVector().X < enemyLocation.X - gTARGET_RADIUS || //X
-                        gravityList[gTargetIndex].getGravityLocationVector().X > enemyLocation.X + gTARGET_RADIUS) || //X
-
-                        (gravityList[gTargetIndex].getGravityLocationVector().Y < enemyLocation.Y - gTARGET_RADIUS || //Y
-                        gravityList[gTargetIndex].getGravityLocationVector().Y > enemyLocation.Y + gTARGET_RADIUS))   //Y
-                    {
-                        gTargetAquired = false;
-                    }
-                    #endregion
-                }
-            }
-        }
-
         /// <summary>
         /// Draws the enemy location
         /// </summary>
@@ -341,10 +269,6 @@ namespace SpaceGame
             if (targetAquired)
             {
                 spriteBatch.Draw(enemyPredictionTexture, targetVector, enemyPredictedRectangle, Color.Red * 0.5f);
-            }
-            if (gTargetAquired)
-            {
-                spriteBatch.Draw(enemyPredictionTexture, gTargetVector, enemyPredictedRectangle, Color.Blue * 0.5f);
             }
 
             spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.White);
