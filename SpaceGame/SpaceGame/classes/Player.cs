@@ -34,9 +34,6 @@ namespace SpaceGame
         bool invertedY = true;
         bool invertedX = false;
 
-        //Player Did Not Press Start(Not Player1)
-        bool playerReady = false;
-
         //Keyboard vector(used to help smooth movement on keyboard)
         Vector2 keyboardVector;
 
@@ -132,8 +129,6 @@ namespace SpaceGame
         {
             currentFrame++;
 
-            playerReady = true;
-
             //Calculate acceleration
             calcAcceleration(gravityList);
 
@@ -143,9 +138,7 @@ namespace SpaceGame
             //Updates player location based on velocity
             playerLocation += playerVelocity;
 
-            //Console.WriteLine("Player Velocity: " + playerVelocity);
-            Console.WriteLine("Player Location: " + playerLocation);
-            //Console.WriteLine("Player Acceleration: " + playerAcceleration);
+            Console.WriteLine("Player Velocity: " + playerVelocity);
 
             calculatePreviousLocation();
 
@@ -164,8 +157,6 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList)
         {
-            playerReady = true;
-
             //Calculate acceleration
             calcAcceleration(gravityList);
 
@@ -174,6 +165,8 @@ namespace SpaceGame
 
             //Updates player rectangle
             playerRectangle = new Rectangle(0, 0, width, height);
+
+            Console.WriteLine("Player Velocity: " + playerVelocity);
         }
         /// <summary>
         /// Overload of update method for players that
@@ -183,11 +176,6 @@ namespace SpaceGame
         public void updateDynamicSpawn(Vector2 dynamicSpawn)
         {
             playerLocation = dynamicSpawn;
-
-            playerVelocity.X = 0.0f;
-            playerVelocity.Y = 0.0f;
-            playerAcceleration.X = 0.0f;
-            playerAcceleration.Y = 0.0f;
         }
         #endregion
 
@@ -344,11 +332,6 @@ namespace SpaceGame
             }
         }
 
-        public bool isPlayerReady()
-        {
-            return playerReady;
-        }
-
         public Rectangle getPlayerRectangle()
         {
             return playerRectangle;
@@ -395,7 +378,7 @@ namespace SpaceGame
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
-                //Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
+                Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
             }
 
             playerAcceleration = (playerThrust * PLAYER_THRUST_SCALE) /*add gravity effect here*/ + temp;
