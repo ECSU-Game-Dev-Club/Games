@@ -11,7 +11,7 @@ using Microsoft.Xna.Framework.Media;
 
 namespace SpaceGame
 {
-    class EnemySwarmAttach
+    class EnemySwarm
     {
         Rectangle enemyRectangle;
         Rectangle enemyPredictedRectangle;
@@ -71,7 +71,7 @@ namespace SpaceGame
         const bool ENEMIES_MERCILESS = true;
 
         //Constructor for player, starts/initializes everything
-        public EnemySwarmAttach(float x, float y, IServiceProvider serviceProvider)
+        public EnemySwarm(float x, float y, IServiceProvider serviceProvider)
         {
             content = new ContentManager(serviceProvider, "Content");
 

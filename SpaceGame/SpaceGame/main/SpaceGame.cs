@@ -72,7 +72,7 @@ namespace SpaceGame
 
         #region"Developer Stuff"
         List<Enemy_prototype> enemyList = new List<Enemy_prototype>();
-        List<EnemySwarmAttach> enemySwarmAttachList = new List<EnemySwarmAttach>();
+        List<EnemySwarm> enemySwarmAttachList = new List<EnemySwarm>();
 
         //GRAVITY STUFF - DELELTE ME WHEN LEVELS COME IN
         List<Gravity> gravityList = new List<Gravity>();              //DELETE ME WHEN LEVELS COME IN
@@ -210,11 +210,6 @@ namespace SpaceGame
             #endregion
 
             #region"Checks if a player wants to play(Press Start)"
-            //Player1 - will spawn a player2
-            if (gamePad1.IsButtonUp(Buttons.Start) && gamePad1_OLDSTATE.IsButtonDown(Buttons.Start))
-            {
-                player2.setIsPlayerReady(!player2.isPlayerReady());
-            }
             //Player2
             if (gamePad2.IsButtonUp(Buttons.Start) && gamePad2_OLDSTATE.IsButtonDown(Buttons.Start))
             {
@@ -263,7 +258,7 @@ namespace SpaceGame
             if (player2.isPlayerReady())
             {
                 //Updates the player2 class and passes all inputs
-                player2.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList);
             }
             else
             {
@@ -314,7 +309,7 @@ namespace SpaceGame
             if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
             {
                 //enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
-                enemySwarmAttachList.Add(new EnemySwarmAttach(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+                enemySwarmAttachList.Add(new EnemySwarm(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
             }
 
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);

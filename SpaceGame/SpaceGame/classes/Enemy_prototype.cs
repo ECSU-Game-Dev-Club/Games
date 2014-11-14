@@ -64,7 +64,7 @@ namespace SpaceGame
         const float ENEMY_BOOST_VELOCITY = 5;
 
         //DEVELOPER FUN COMMANDS
-        const bool ENEMIES_MERCILESS = true;
+        const bool ENEMIES_MERCILESS = false;
 
         //Constructor for player, starts/initializes everything
         public Enemy_prototype(float x, float y, IServiceProvider serviceProvider)
