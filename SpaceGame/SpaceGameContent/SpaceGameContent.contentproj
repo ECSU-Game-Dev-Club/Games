@@ -37,10 +37,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="spriteFont.bmp">
+    <Compile Include="Tools\spriteFont.bmp">
       <Name>spriteFont</Name>
       <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
+      <Processor>FontTextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>

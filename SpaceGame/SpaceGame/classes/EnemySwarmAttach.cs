@@ -11,12 +11,14 @@ using Microsoft.Xna.Framework.Media;
 
 namespace SpaceGame
 {
-    class Enemy_prototype
+    class EnemySwarmAttach
     {
         Rectangle enemyRectangle;
         Rectangle enemyPredictedRectangle;
         int width = 20;
         int height = 20;
+
+        Random random;
 
         //Create a new content manager to load content used just by this level.
         ContentManager content;
@@ -25,10 +27,15 @@ namespace SpaceGame
         Vector2 enemyOrigin;
 
         //Target Stuff
+        const int TARGET_RADIUS = 400;
+        const int TARGET_ATTACH_RADIUS = 20;
+
         int targetIndex;
         Vector2 targetVector;
         Vector2 secondaryTargetVector;
-        bool targetAquired;
+
+        bool targetAquired = false;
+        bool targetAttached = false;
 
         //Players texture
         Texture2D enemyTexture;
@@ -46,9 +53,6 @@ namespace SpaceGame
         //Enemy mass
         const double ENEMY_MASS = 1;
 
-        //Enemy 
-        const int TARGET_RADIUS = 400;
-
         //predictive
         const int MAX_PREDICTED_FRAMES = 50;
         Vector2[] enemyPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
@@ -61,15 +65,17 @@ namespace SpaceGame
         const float ENEMY_THRUST_SCALE = .1f;
 
         //Player Boost Velocity
-        const float ENEMY_BOOST_VELOCITY = 5;
+        const float ENEMY_BOOST_VELOCITY = 5; 
 
         //DEVELOPER FUN COMMANDS
         const bool ENEMIES_MERCILESS = true;
 
         //Constructor for player, starts/initializes everything
-        public Enemy_prototype(float x, float y, IServiceProvider serviceProvider)
+        public EnemySwarmAttach(float x, float y, IServiceProvider serviceProvider)
         {
             content = new ContentManager(serviceProvider, "Content");
+
+            random = new Random();
 
             enemyLocation.X = x;
             enemyLocation.Y = y;
@@ -89,14 +95,12 @@ namespace SpaceGame
             targetVector = new Vector2(0, 0);
             secondaryTargetVector = new Vector2(0, 0);
 
-            targetAquired = false;
-
             this.LoadContent();
         }
 
         private void LoadContent()
         {
-            enemyTexture = content.Load<Texture2D>("enemy/Swarmling");
+            enemyTexture = content.Load<Texture2D>("Enemy/Swarmling");
 
             enemyPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
@@ -126,7 +130,7 @@ namespace SpaceGame
                                 //player is within radius, player is now secondary target
                                 secondaryTargetVector = players[i].getPlayerLocation();
 
-                                //This is now the target 
+                                //This is now the target
                                 targetIndex = i;
 
                                 targetAquired = true;
@@ -165,6 +169,32 @@ namespace SpaceGame
             }
             #endregion
 
+            #region"Attach to player if near"
+            //If player is within radius -X-
+            if (players[targetIndex].getPlayerLocation().X >= enemyLocation.X - TARGET_ATTACH_RADIUS && players[targetIndex].getPlayerLocation().X <= enemyLocation.X + TARGET_ATTACH_RADIUS)
+            {
+                //If player is within radius -Y-
+                if (players[targetIndex].getPlayerLocation().Y >= enemyLocation.Y - TARGET_ATTACH_RADIUS && players[targetIndex].getPlayerLocation().Y <= enemyLocation.Y + TARGET_ATTACH_RADIUS)
+                {
+                    targetAttached = true;
+                    enemyThrust.X = 0;
+                    enemyThrust.Y = 0;
+                    enemyVelocity.X = 0;
+                    enemyVelocity.Y = 0;
+                    enemyAcceleration.X = 0;
+                    enemyAcceleration.X = 0;
+                }
+            }
+
+            if(targetAttached)
+            {
+                enemyLocation.X = random.Next((int)players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2)) - (width / 2);
+                enemyLocation.Y = random.Next((int)players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Width / 2)) - (height / 2);
+
+            }
+            #endregion
+
+            #region"Move toward player"
             //If target acquired update the target vector with the targets position
             if (targetAquired)
             {
@@ -196,8 +226,17 @@ namespace SpaceGame
                 targetVector.X = 0;
                 targetVector.Y = 0;
             }
+            #endregion
 
-            calcAcceleration(gravityList);
+            if (players[targetIndex].getPlayerBoost() && targetAttached)
+            {
+
+            }
+
+            if (!targetAttached)
+            {
+                calcAcceleration(gravityList);
+            }
 
             //Updates enemy location based on velocity
             enemyLocation += enemyVelocity;
@@ -272,13 +311,7 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            //Draws a box around target
-            if (targetAquired)
-            {
-                spriteBatch.Draw(enemyPredictionTexture, targetVector, enemyPredictedRectangle, Color.Red * 0.5f);
-            }
-
-            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.White);
+            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue);
         }
     }
 }

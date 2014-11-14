@@ -44,17 +44,14 @@ namespace SpaceGame
         //Player2's gamepad
         GamePadState gamePad2;
         GamePadState gamePad2_OLDSTATE;
-        bool isPlayerTwoPlaying = false;
 
         //Player3's gamepad
         GamePadState gamePad3;
         GamePadState gamePad3_OLDSTATE;
-        bool isPlayerThreePlaying = false;
 
         //Player4's gamepad
         GamePadState gamePad4;
         GamePadState gamePad4_OLDSTATE;
-        bool isPlayerFourPlaying = false;
         #endregion
 
         //KEYBOAD
@@ -73,17 +70,23 @@ namespace SpaceGame
         //Sets up camera class
         Camera camera;
 
+        #region"Developer Stuff"
+        List<Enemy_prototype> enemyList = new List<Enemy_prototype>();
+        List<EnemySwarmAttach> enemySwarmAttachList = new List<EnemySwarmAttach>();
+
         //GRAVITY STUFF - DELELTE ME WHEN LEVELS COME IN
         List<Gravity> gravityList = new List<Gravity>();              //DELETE ME WHEN LEVELS COME IN
         List<Rectangle> gravityRectangleList = new List<Rectangle>(); //DELETE ME WHEN LEVELS COME IN
         Texture2D gravityTexture;                                     //DELETE ME WHEN LEVELS COME IN
-        float gravityWellRotation;                                    //DELETE ME WHEN LEVELS COME IN
+        float gravityWellRotation;
 
-        //DELETE ME WHEN ENEMIES ARE FINISHED
-        List<Enemy_prototype> enemyList = new List<Enemy_prototype>();
+        int[] listLocations = new int[20];
 
-        #region"Developer Stuff"
         Rectangle cameraRectangle;
+
+        SpriteFont font;
+
+        public static bool devMode = false;
         #endregion
 
         public SpaceGame()
@@ -148,9 +151,17 @@ namespace SpaceGame
 
             gravityTexture = Content.Load<Texture2D>("gWell");
 
+            #region"DEV CONTENT"
+
+            font = Content.Load<SpriteFont>("Tools/spriteFont");
+
+            #endregion
+
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             // TODO: use this.Content to load your game content here
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
         }
 
         /// <summary>
@@ -199,20 +210,25 @@ namespace SpaceGame
             #endregion
 
             #region"Checks if a player wants to play(Press Start)"
+            //Player1 - will spawn a player2
+            if (gamePad1.IsButtonUp(Buttons.Start) && gamePad1_OLDSTATE.IsButtonDown(Buttons.Start))
+            {
+                player2.setIsPlayerReady(!player2.isPlayerReady());
+            }
             //Player2
             if (gamePad2.IsButtonUp(Buttons.Start) && gamePad2_OLDSTATE.IsButtonDown(Buttons.Start))
             {
-                isPlayerTwoPlaying = !isPlayerTwoPlaying;
+                player2.setIsPlayerReady(!player2.isPlayerReady());
             }
             //Player3
             if (gamePad3.IsButtonUp(Buttons.Start) && gamePad3_OLDSTATE.IsButtonDown(Buttons.Start))
             {
-                isPlayerThreePlaying = !isPlayerThreePlaying;
+                player3.setIsPlayerReady(!player3.isPlayerReady());
             }
             //Player4
             if (gamePad4.IsButtonUp(Buttons.Start) && gamePad4_OLDSTATE.IsButtonDown(Buttons.Start))
             {
-                isPlayerFourPlaying = !isPlayerFourPlaying;
+                player4.setIsPlayerReady(!player4.isPlayerReady());
             }
             #endregion
 
@@ -236,11 +252,6 @@ namespace SpaceGame
                 gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 25000));
                 gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
             }
-
-            if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
-            {
-                enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
-            }
             #endregion
 
             #region"Updates all players"
@@ -249,10 +260,10 @@ namespace SpaceGame
             player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
 
             //If player 2 is playing
-            if (isPlayerTwoPlaying)
+            if (player2.isPlayerReady())
             {
                 //Updates the player2 class and passes all inputs
-                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList);
+                player2.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
             }
             else
             {
@@ -260,10 +271,10 @@ namespace SpaceGame
             }
 
             //If player 3 is playing
-            if (isPlayerThreePlaying)
+            if (player3.isPlayerReady())
             {
                 //Updates the player3 class and passes all inputs
-                player3.update(gamePad3, gamePad3_OLDSTATE, gravityList);
+                player3.update(gamePad1, gamePad1_OLDSTATE, gravityList);
             }
             else
             {
@@ -271,10 +282,10 @@ namespace SpaceGame
             }
 
             //If player 4 is playing
-            if (isPlayerFourPlaying)
+            if (player4.isPlayerReady())
             {
                 //Updates the player4 class and passes all inputs
-                player4.update(gamePad4, gamePad4_OLDSTATE, gravityList);
+                player4.update(gamePad1, gamePad1_OLDSTATE, gravityList);
             }
             else
             {
@@ -294,6 +305,18 @@ namespace SpaceGame
             background.Update(player1.getPlayerLocationDelta());
 
             #region"Dev Stuff"
+            //DEVMODE
+            if (keyboard.IsKeyUp(Keys.OemTilde) && keyboard_OLDSTATE.IsKeyDown(Keys.OemTilde))
+            {
+                devMode = !devMode;
+            }
+
+            if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
+            {
+                //enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+                enemySwarmAttachList.Add(new EnemySwarmAttach(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+            }
+
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
 
             for (int i = 0; i < enemyList.Count; i++)
@@ -301,14 +324,25 @@ namespace SpaceGame
                 enemyList[i].update(gravityList, playerArray);
             }
 
-            if (keyboard.IsKeyDown(Keys.OemOpenBrackets))
+            for (int i = 0; i < enemySwarmAttachList.Count; i++)
             {
-                camera.zoomIncriment();
+                enemySwarmAttachList[i].update(gravityList, playerArray);
             }
-            if (keyboard.IsKeyDown(Keys.OemCloseBrackets))
+
+            if (devMode)
             {
-                camera.zoomDecriment();
+                //ZOOM
+                if (keyboard.IsKeyDown(Keys.OemOpenBrackets))
+                {
+                    camera.zoomIncriment();
+                }
+                if (keyboard.IsKeyDown(Keys.OemCloseBrackets))
+                {
+                    camera.zoomDecriment();
+                }
             }
+
+
             #endregion
 
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -362,9 +396,14 @@ namespace SpaceGame
             }
             #endregion
 
+            //DRAW ENEMIES
             for (int i = 0; i < enemyList.Count; i++)
             {
                 enemyList[i].Draw(spriteBatch);
+            }
+            for (int i = 0; i < enemySwarmAttachList.Count; i++)
+            {
+                enemySwarmAttachList[i].Draw(spriteBatch);
             }
 
             #region"Draw all players"
@@ -372,19 +411,19 @@ namespace SpaceGame
             player1.Draw(spriteBatch);
 
             //Draw everything in player2 class
-            if (isPlayerTwoPlaying)
+            if (player2.isPlayerReady())
             {
                 player2.Draw(spriteBatch);
             }
 
             //Draw everything in player3 class
-            if (isPlayerThreePlaying)
+            if (player3.isPlayerReady())
             {
                 player3.Draw(spriteBatch);
             }
 
             //Draw everything in player4 class
-            if (isPlayerFourPlaying)
+            if (player4.isPlayerReady())
             {
                 player4.Draw(spriteBatch);
             }
@@ -396,7 +435,62 @@ namespace SpaceGame
             // DRAW EVERYTHING IN HERE!!!!!!!!!
             //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+            #region"DEV DRAWING - CAMERA"
+            if (devMode)
+            {
+                //GRAVITY
+                for (int i = 0; i < gravityList.Count; i++)
+                {
+                    spriteBatch.DrawString(font, "#" + i, new Vector2(gravityList[i].getGravityLocationVector().X - 40, gravityList[i].getGravityLocationVector().Y - 40), Color.Yellow);
+                }
+                //ENEMIES - PROTOTYPE
+                for (int i = 0; i < enemyList.Count; i++)
+                {
+                    spriteBatch.DrawString(font, "#" + i, new Vector2(enemyList[i].getEnemyLocationVector().X - 20, enemyList[i].getEnemyLocationVector().Y - 20), Color.Yellow);
+                }
+                //ENEMIES - ATTACH
+                for (int i = 0; i < enemySwarmAttachList.Count; i++)
+                {
+                    spriteBatch.DrawString(font, "#" + i, new Vector2(enemySwarmAttachList[i].getEnemyLocationVector().X - 20, enemySwarmAttachList[i].getEnemyLocationVector().Y - 20), Color.Yellow);
+                }
+                //PLAYERS
+                if (player2.isPlayerReady() || player3.isPlayerReady() || player4.isPlayerReady())
+                {
+                    for (int i = 0; i < enemyList.Count; i++)
+                    {
+                        spriteBatch.DrawString(font, "#" + i, new Vector2(enemyList[i].getEnemyLocationVector().X - 20, enemyList[i].getEnemyLocationVector().Y - 20), Color.Blue);
+                    }
+                }
+            }
+            #endregion
+
             spriteBatch.End();
+
+            #region"DEV DRAWING - STATIC"
+            if (devMode)
+            {
+                spriteBatch.Begin();
+
+                for (int i = 0; i < listLocations.Length; i++)
+                {
+                    if (i == 0)
+                    {
+                        spriteBatch.DrawString(font, "Player Velocity: {X:" + player1.getPlayerVelocityVector().X + "} {Y: " + player1.getPlayerVelocityVector().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
+                    }
+                    if (i == 1)
+                    {
+                        spriteBatch.DrawString(font, "Player Acceleration: {X:" + player1.getPlayerAccelerationVector().X + "} {Y: " + player1.getPlayerAccelerationVector().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
+                    }
+                    if (i == 2)
+                    {
+                        spriteBatch.DrawString(font, "Player Location: {X:" + player1.getPlayerLocation().X + "} {Y: " + player1.getPlayerLocation().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
+                    }
+                }
+
+
+                spriteBatch.End();
+            }
+            #endregion
 
             base.Draw(gameTime);
         }

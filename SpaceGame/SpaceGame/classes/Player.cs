@@ -60,6 +60,7 @@ namespace SpaceGame
 
         //Player Boost Velocity
         const float PLAYER_BOOST_VELOCITY = 5;
+        bool playerBoosted = false;
 
         //Player mass
         const double PLAYER_MASS = 1;
@@ -112,9 +113,9 @@ namespace SpaceGame
         /// </summary>
         private void LoadContent()
         {
-            playerTexture = content.Load<Texture2D>("player/game_ship");
+            playerTexture = content.Load<Texture2D>("Player/game_ship");
 
-            playerThrustTexture = content.Load<Texture2D>("player/game_ship_thrust");
+            playerThrustTexture = content.Load<Texture2D>("Player/game_ship_thrust");
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
@@ -164,7 +165,10 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList)
         {
+            //Player is playing
             playerReady = true;
+            //Player didnt boost
+            playerBoosted = false;
 
             //Calculate acceleration
             calcAcceleration(gravityList);
@@ -322,6 +326,11 @@ namespace SpaceGame
             }
         }
 
+        public void setIsPlayerReady(bool initPlayerReady)
+        {
+            playerReady = initPlayerReady;
+        }
+
         /// <summary>
         /// Thrust in a direction
         ///  X(0-1) Y(0-1)
@@ -330,6 +339,8 @@ namespace SpaceGame
         /// <param name="Y">Provides a float Y(0-1)</param>
         private void boostDirection(float x, float y)
         {
+            playerBoosted = true;
+
             playerVelocity.X += PLAYER_BOOST_VELOCITY * x;
             playerVelocity.Y += PLAYER_BOOST_VELOCITY * (-1 * y);
         }
@@ -375,6 +386,11 @@ namespace SpaceGame
         public bool isPlayerReady()
         {
             return playerReady;
+        }
+
+        public bool getPlayerBoost()
+        {
+            return playerBoosted;
         }
 
         public Rectangle getPlayerRectangle()
