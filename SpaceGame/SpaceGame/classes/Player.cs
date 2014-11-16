@@ -187,14 +187,14 @@ namespace SpaceGame
         /// are not player1
         /// </summary>
         /// <param name="dynamicSpawn">Provides player.</param>
-        public void updateDynamicSpawn(Vector2 dynamicSpawn)
+        public void updateDynamicSpawn(Player player1)
         {
-            playerLocation = dynamicSpawn;
+            playerLocation = player1.getPlayerLocation();
 
-            playerVelocity.X = 0.0f;
-            playerVelocity.Y = 0.0f;
-            playerAcceleration.X = 0.0f;
-            playerAcceleration.Y = 0.0f;
+            playerVelocity.X = player1.getPlayerVelocityVector().X;
+            playerVelocity.Y = player1.getPlayerVelocityVector().Y;
+            playerAcceleration.X = player1.getPlayerAccelerationVector().X;
+            playerAcceleration.Y = player1.getPlayerAccelerationVector().Y;
         }
         #endregion
 

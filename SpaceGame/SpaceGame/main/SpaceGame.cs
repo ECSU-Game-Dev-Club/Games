@@ -78,9 +78,10 @@ namespace SpaceGame
         List<Gravity> gravityList = new List<Gravity>();              //DELETE ME WHEN LEVELS COME IN
         List<Rectangle> gravityRectangleList = new List<Rectangle>(); //DELETE ME WHEN LEVELS COME IN
         Texture2D gravityTexture;                                     //DELETE ME WHEN LEVELS COME IN
-        float gravityWellRotation;
+        const float GRAVITY_WELL_ROTATION = 0.1f;
 
-        int[] listLocations = new int[20];
+        const int MAX_CONSOLE = 20;
+        int[] listLocations = new int[MAX_CONSOLE];
 
         Rectangle cameraRectangle;
 
@@ -239,16 +240,6 @@ namespace SpaceGame
                 graphics.ToggleFullScreen();
             }
 
-            //Gravity wells with a click of mouse1
-            #region"DELETE ME WHEN YOU MAKE LEVELS"
-            gravityWellRotation -= 0.1f;
-            if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
-            {
-                gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 25000));
-                gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
-            }
-            #endregion
-
             #region"Updates all players"
 
             //Updates the player1 class and passes all inputs
@@ -262,7 +253,7 @@ namespace SpaceGame
             }
             else
             {
-                player2.updateDynamicSpawn(player1.getPlayerLocation());
+                player2.updateDynamicSpawn(player1);
             }
 
             //If player 3 is playing
@@ -273,7 +264,7 @@ namespace SpaceGame
             }
             else
             {
-                player3.updateDynamicSpawn(player1.getPlayerLocation());
+                player3.updateDynamicSpawn(player1);
             }
 
             //If player 4 is playing
@@ -284,7 +275,7 @@ namespace SpaceGame
             }
             else
             {
-                player4.updateDynamicSpawn(player1.getPlayerLocation());
+                player4.updateDynamicSpawn(player1);
             }
 
             playerArray[0] = player1;
@@ -304,12 +295,6 @@ namespace SpaceGame
             if (keyboard.IsKeyUp(Keys.OemTilde) && keyboard_OLDSTATE.IsKeyDown(Keys.OemTilde))
             {
                 devMode = !devMode;
-            }
-
-            if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
-            {
-                //enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
-                enemySwarmAttachList.Add(new EnemySwarm(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
             }
 
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
@@ -334,6 +319,19 @@ namespace SpaceGame
                 if (keyboard.IsKeyDown(Keys.OemCloseBrackets))
                 {
                     camera.zoomDecriment();
+                }
+
+                //Right Mouse Button
+                if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
+                {
+                    enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+                    //enemySwarmAttachList.Add(new EnemySwarm(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+                }
+                //Left Mouse Button
+                if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
+                {
+                    gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 25000));
+                    gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
                 }
             }
 
@@ -387,7 +385,7 @@ namespace SpaceGame
             #region"Draws gravity wells - DELETE ME WHEN LEVELS COME IN"
             for (int i = 0; i < gravityList.Count(); i++)
             {
-                spriteBatch.Draw(gravityTexture, gravityList[i].getGravityLocationVector(), gravityRectangleList[i], Color.White, gravityWellRotation, new Vector2(25, 25), 1.0f, SpriteEffects.None, 0);
+                spriteBatch.Draw(gravityTexture, gravityList[i].getGravityLocationVector(), gravityRectangleList[i], Color.White, GRAVITY_WELL_ROTATION, new Vector2(25, 25), 1.0f, SpriteEffects.None, 0);
             }
             #endregion
 
@@ -449,12 +447,19 @@ namespace SpaceGame
                     spriteBatch.DrawString(font, "#" + i, new Vector2(enemySwarmAttachList[i].getEnemyLocationVector().X - 20, enemySwarmAttachList[i].getEnemyLocationVector().Y - 20), Color.Yellow);
                 }
                 //PLAYERS
-                if (player2.isPlayerReady() || player3.isPlayerReady() || player4.isPlayerReady())
+                spriteBatch.DrawString(font, "#1", new Vector2(playerArray[0].getPlayerLocation().X - 30, playerArray[0].getPlayerLocation().Y - 30), Color.PaleGreen);
+
+                if (player2.isPlayerReady())
                 {
-                    for (int i = 0; i < enemyList.Count; i++)
-                    {
-                        spriteBatch.DrawString(font, "#" + i, new Vector2(enemyList[i].getEnemyLocationVector().X - 20, enemyList[i].getEnemyLocationVector().Y - 20), Color.Blue);
-                    }
+                    spriteBatch.DrawString(font, "#2", new Vector2(playerArray[1].getPlayerLocation().X - 30, playerArray[1].getPlayerLocation().Y - 30), Color.PaleGreen);
+                }
+                if (player3.isPlayerReady())
+                {
+                    spriteBatch.DrawString(font, "#3", new Vector2(playerArray[2].getPlayerLocation().X - 30, playerArray[2].getPlayerLocation().Y - 30), Color.PaleGreen);
+                }
+                if (player4.isPlayerReady())
+                {
+                    spriteBatch.DrawString(font, "#4", new Vector2(playerArray[3].getPlayerLocation().X - 30, playerArray[3].getPlayerLocation().Y - 30), Color.PaleGreen);
                 }
             }
             #endregion
@@ -466,7 +471,8 @@ namespace SpaceGame
             {
                 spriteBatch.Begin();
 
-                for (int i = 0; i < listLocations.Length; i++)
+                //Console draw
+                for (int i = 0; i < MAX_CONSOLE; i++)
                 {
                     if (i == 0)
                     {
@@ -480,8 +486,11 @@ namespace SpaceGame
                     {
                         spriteBatch.DrawString(font, "Player Location: {X:" + player1.getPlayerLocation().X + "} {Y: " + player1.getPlayerLocation().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
                     }
+                    if (i == 3)
+                    {
+                        spriteBatch.DrawString(font, "FPS: " + fps, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Turquoise);
+                    }
                 }
-
 
                 spriteBatch.End();
             }

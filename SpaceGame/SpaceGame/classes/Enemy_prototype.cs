@@ -25,7 +25,12 @@ namespace SpaceGame
         Vector2 enemyOrigin;
 
         //Target Stuff
+        const int TARGET_RADIUS = 400;
+
+        double[] playersDistances = new double[4];
+
         int targetIndex;
+        double targetDistance;
         Vector2 targetVector;
         Vector2 secondaryTargetVector;
         bool targetAquired;
@@ -46,9 +51,6 @@ namespace SpaceGame
         //Enemy mass
         const double ENEMY_MASS = 1;
 
-        //Enemy 
-        const int TARGET_RADIUS = 400;
-
         //predictive
         const int MAX_PREDICTED_FRAMES = 50;
         Vector2[] enemyPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
@@ -64,7 +66,7 @@ namespace SpaceGame
         const float ENEMY_BOOST_VELOCITY = 5;
 
         //DEVELOPER FUN COMMANDS
-        const bool ENEMIES_MERCILESS = false;
+        const bool ENEMIES_MERCILESS = true;
 
         //Constructor for player, starts/initializes everything
         public Enemy_prototype(float x, float y, IServiceProvider serviceProvider)
@@ -109,43 +111,42 @@ namespace SpaceGame
             //Console.WriteLine("Player Acceleration: " + enemyAcceleration);
 
             #region"Get closest player"
-            //If target has not been aquired
-            if (!targetAquired)
+            for (int i = 0; i < players.Count(); i++)
             {
-                //For all players
-                for (int i = 0; i < players.Count() - 1; i++)
+                if (players[i].isPlayerReady())//Is the player playing.
                 {
-                    if (players[i].isPlayerReady())
-                    {
-                        //If player is within radius -X-
-                        if (players[i].getPlayerLocation().X >= enemyLocation.X - TARGET_RADIUS && players[i].getPlayerLocation().X <= enemyLocation.X + TARGET_RADIUS)
-                        {
-                            //If player is within radius -Y-
-                            if (players[i].getPlayerLocation().Y >= enemyLocation.Y - TARGET_RADIUS && players[i].getPlayerLocation().Y <= enemyLocation.Y + TARGET_RADIUS)
-                            {
-                                //player is within radius, player is now secondary target
-                                secondaryTargetVector = players[i].getPlayerLocation();
+                    //Get distance between player and me
+                    playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
 
-                                //This is now the target 
+                    //Is the player within my vision
+                    if (playersDistances[i] <= TARGET_RADIUS)
+                    {
+                        //If no target
+                        if (!targetAquired)
+                        {
+                            //Target found
+                            targetAquired = true;
+
+                            //Keep track of what player I am targeting
+                            targetIndex = i;
+
+                            //Keep track of distance between the target and me
+                            targetDistance = playersDistances[i];
+                        }
+                        //If I am targetting something
+                        else
+                        {
+                            //Update the targets distance
+                            targetDistance = playersDistances[targetIndex];
+
+                            //If a player is closer than the target
+                            if (playersDistances[i] < targetDistance)
+                            {
+                                //Keep track of which player is closer than target
                                 targetIndex = i;
 
-                                targetAquired = true;
-
-                                //Check if any players are closer
-                                //If player is closer to enemy than target -X-
-                                if ((players[i].getPlayerLocation().X > secondaryTargetVector.X && players[i].getPlayerLocation().X < enemyLocation.X) ||
-                                    (players[i].getPlayerLocation().X <= secondaryTargetVector.X && players[i].getPlayerLocation().X > enemyLocation.X))
-                                {
-                                    //If player is closer to enemy than target -Y-
-                                    if ((players[i].getPlayerLocation().Y > secondaryTargetVector.Y && players[i].getPlayerLocation().Y < enemyLocation.Y) ||
-                                        (players[i].getPlayerLocation().Y <= secondaryTargetVector.Y && players[i].getPlayerLocation().Y > enemyLocation.Y))
-                                    {
-                                        //This is now the target
-                                        targetIndex = i;
-
-                                        targetAquired = true;
-                                    }
-                                }
+                                //Keep track of distance between the target and me
+                                targetDistance = playersDistances[i];
                             }
                         }
                     }
@@ -154,11 +155,7 @@ namespace SpaceGame
 
             if (!ENEMIES_MERCILESS)
             {
-                if ((players[targetIndex].getPlayerLocation().X < enemyLocation.X - TARGET_RADIUS || //X
-                    players[targetIndex].getPlayerLocation().X > enemyLocation.X + TARGET_RADIUS) || //X
-
-                    (players[targetIndex].getPlayerLocation().Y < enemyLocation.Y - TARGET_RADIUS || //Y
-                    players[targetIndex].getPlayerLocation().Y > enemyLocation.Y + TARGET_RADIUS))   //Y
+                if (targetDistance > TARGET_RADIUS)
                 {
                     targetAquired = false;
                 }
@@ -168,10 +165,9 @@ namespace SpaceGame
             //If target acquired update the target vector with the targets position
             if (targetAquired)
             {
+                //Update targets location
                 targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
                 targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
-
-                Vector2 targetDistanceFromMe = new Vector2(players[targetIndex].getPlayerLocation().X - enemyLocation.X, players[targetIndex].getPlayerLocation().Y - enemyLocation.Y);
 
                 //Move toward target
                 if (targetVector.X < enemyLocation.X)
@@ -191,8 +187,10 @@ namespace SpaceGame
                     enemyThrust.Y = 1;
                 }
             }
+            //NO TARGET
             else
             {
+                //This is where he needs to orbit a gWell or slow down to a stop
                 targetVector.X = 0;
                 targetVector.Y = 0;
             }

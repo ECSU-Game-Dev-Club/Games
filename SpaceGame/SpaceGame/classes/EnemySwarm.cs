@@ -14,7 +14,6 @@ namespace SpaceGame
     class EnemySwarm
     {
         Rectangle enemyRectangle;
-        Rectangle enemyPredictedRectangle;
         int width = 20;
         int height = 20;
 
@@ -30,7 +29,10 @@ namespace SpaceGame
         const int TARGET_RADIUS = 400;
         const int TARGET_ATTACH_RADIUS = 20;
 
+        double[] playersDistances = new double[4];
+
         int targetIndex;
+        double targetDistance;
         Vector2 targetVector;
         Vector2 secondaryTargetVector;
 
@@ -39,7 +41,6 @@ namespace SpaceGame
 
         //Players texture
         Texture2D enemyTexture;
-        Texture2D enemyPredictionTexture;
 
         //Players location
         Vector2 enemyLocation;
@@ -49,15 +50,10 @@ namespace SpaceGame
         Vector2 enemyAcceleration;
         //Player Rotation redians
         float enemyRotation;
+        Vector2 temp;
 
         //Enemy mass
         const double ENEMY_MASS = 1;
-
-        //predictive
-        const int MAX_PREDICTED_FRAMES = 50;
-        Vector2[] enemyPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
-        Vector2[] enemyPredictedVelocity = new Vector2[MAX_PREDICTED_FRAMES];
-        Vector2[] enemyPredictedAcceleration = new Vector2[MAX_PREDICTED_FRAMES];
 
         //thrust is the location of thumbstick left
         Vector2 enemyThrust;
@@ -65,7 +61,7 @@ namespace SpaceGame
         const float ENEMY_THRUST_SCALE = .1f;
 
         //Player Boost Velocity
-        const float ENEMY_BOOST_VELOCITY = 5; 
+        const float ENEMY_BOOST_VELOCITY = 5;
 
         //DEVELOPER FUN COMMANDS
         const bool ENEMIES_MERCILESS = true;
@@ -77,6 +73,8 @@ namespace SpaceGame
 
             random = new Random();
 
+            temp = new Vector2();
+
             enemyLocation.X = x;
             enemyLocation.Y = y;
 
@@ -85,7 +83,6 @@ namespace SpaceGame
             enemyAcceleration = new Vector2(0, 0);
 
             enemyRectangle = new Rectangle(0, 0, width, height);
-            enemyPredictedRectangle = new Rectangle(0, 0, 30, 30);
 
             enemyOrigin.X = width / 2;
             enemyOrigin.Y = height / 2;
@@ -101,8 +98,6 @@ namespace SpaceGame
         private void LoadContent()
         {
             enemyTexture = content.Load<Texture2D>("Enemy/Swarmling");
-
-            enemyPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
 
         //Updates the player every frame
@@ -113,44 +108,27 @@ namespace SpaceGame
             //Console.WriteLine("Player Acceleration: " + enemyAcceleration);
 
             #region"Get closest player"
-            //If target has not been aquired
-            if (!targetAquired)
+            for (int i = 0; i < players.Count(); i++)
             {
-                //For all players
-                for (int i = 0; i < players.Count() - 1; i++)
+                if (players[i].isPlayerReady())//Is the player playing.
                 {
-                    if (players[i].isPlayerReady())
+                    //Get distance between player and me
+                    playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
+
+                    //Is the player within my vision
+                    if (playersDistances[i] <= TARGET_RADIUS)
                     {
-                        //If player is within radius -X-
-                        if (players[i].getPlayerLocation().X >= enemyLocation.X - TARGET_RADIUS && players[i].getPlayerLocation().X <= enemyLocation.X + TARGET_RADIUS)
+                        //If no target
+                        if (!targetAquired)
                         {
-                            //If player is within radius -Y-
-                            if (players[i].getPlayerLocation().Y >= enemyLocation.Y - TARGET_RADIUS && players[i].getPlayerLocation().Y <= enemyLocation.Y + TARGET_RADIUS)
-                            {
-                                //player is within radius, player is now secondary target
-                                secondaryTargetVector = players[i].getPlayerLocation();
+                            //Target found
+                            targetAquired = true;
 
-                                //This is now the target
-                                targetIndex = i;
+                            //Keep track of what player I am targeting
+                            targetIndex = i;
 
-                                targetAquired = true;
-
-                                //Check if any players are closer
-                                //If player is closer to enemy than target -X-
-                                if ((players[i].getPlayerLocation().X > secondaryTargetVector.X && players[i].getPlayerLocation().X < enemyLocation.X) ||
-                                    (players[i].getPlayerLocation().X <= secondaryTargetVector.X && players[i].getPlayerLocation().X > enemyLocation.X))
-                                {
-                                    //If player is closer to enemy than target -Y-
-                                    if ((players[i].getPlayerLocation().Y > secondaryTargetVector.Y && players[i].getPlayerLocation().Y < enemyLocation.Y) ||
-                                        (players[i].getPlayerLocation().Y <= secondaryTargetVector.Y && players[i].getPlayerLocation().Y > enemyLocation.Y))
-                                    {
-                                        //This is now the target
-                                        targetIndex = i;
-
-                                        targetAquired = true;
-                                    }
-                                }
-                            }
+                            //Keep track of distance between the target and me
+                            targetDistance = playersDistances[i];
                         }
                     }
                 }
@@ -158,11 +136,7 @@ namespace SpaceGame
 
             if (!ENEMIES_MERCILESS)
             {
-                if ((players[targetIndex].getPlayerLocation().X < enemyLocation.X - TARGET_RADIUS || //X
-                    players[targetIndex].getPlayerLocation().X > enemyLocation.X + TARGET_RADIUS) || //X
-
-                    (players[targetIndex].getPlayerLocation().Y < enemyLocation.Y - TARGET_RADIUS || //Y
-                    players[targetIndex].getPlayerLocation().Y > enemyLocation.Y + TARGET_RADIUS))   //Y
+                if (targetDistance > TARGET_RADIUS)
                 {
                     targetAquired = false;
                 }
@@ -171,22 +145,18 @@ namespace SpaceGame
 
             #region"Attach to player if near"
             //If player is within radius -X-
-            if (players[targetIndex].getPlayerLocation().X >= enemyLocation.X - TARGET_ATTACH_RADIUS && players[targetIndex].getPlayerLocation().X <= enemyLocation.X + TARGET_ATTACH_RADIUS)
+            if (playersDistances[targetIndex] < TARGET_ATTACH_RADIUS)
             {
-                //If player is within radius -Y-
-                if (players[targetIndex].getPlayerLocation().Y >= enemyLocation.Y - TARGET_ATTACH_RADIUS && players[targetIndex].getPlayerLocation().Y <= enemyLocation.Y + TARGET_ATTACH_RADIUS)
-                {
-                    targetAttached = true;
-                    enemyThrust.X = 0;
-                    enemyThrust.Y = 0;
-                    enemyVelocity.X = 0;
-                    enemyVelocity.Y = 0;
-                    enemyAcceleration.X = 0;
-                    enemyAcceleration.X = 0;
-                }
+                targetAttached = true;
+                enemyThrust.X = 0;
+                enemyThrust.Y = 0;
+                enemyVelocity.X = 0;
+                enemyVelocity.Y = 0;
+                enemyAcceleration.X = 0;
+                enemyAcceleration.X = 0;
             }
 
-            if(targetAttached)
+            if (targetAttached)
             {
                 enemyLocation.X = random.Next((int)players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2)) - (width / 2);
                 enemyLocation.Y = random.Next((int)players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Width / 2)) - (height / 2);
@@ -266,8 +236,6 @@ namespace SpaceGame
         /// <param name="gravityList">Provides a list of all gravity wells near you.</param>
         private void calcAcceleration(List<Gravity> gravityList)
         {
-            Vector2 temp = new Vector2();
-
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 temp += gravityList[i].calcGVectorAcceleration(enemyLocation.X, enemyLocation.Y, ENEMY_MASS);
@@ -278,31 +246,6 @@ namespace SpaceGame
             temp = new Vector2();
 
             enemyVelocity += enemyAcceleration;
-
-            //playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
-            //playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
-
-            //predictive path
-            enemyPredictedLocation[0] = enemyLocation;
-            enemyPredictedVelocity[0] = enemyVelocity;
-            enemyPredictedAcceleration[0] = enemyAcceleration;
-
-            for (int k = 1; k < MAX_PREDICTED_FRAMES; k++)
-            {
-                Vector2 pTemp = new Vector2();
-                //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
-                //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
-                enemyPredictedLocation[k] = enemyPredictedLocation[k - 1] + enemyPredictedVelocity[k];
-                for (int i = 0; i < gravityList.Count(); i++)
-                {
-                    pTemp += gravityList[i].calcGVectorAcceleration(enemyPredictedLocation[k].X, enemyPredictedLocation[k].Y, ENEMY_MASS);
-                }
-
-                enemyPredictedAcceleration[k] = pTemp;
-                enemyPredictedVelocity[k] = enemyPredictedVelocity[k - 1] + enemyPredictedAcceleration[k];
-
-                pTemp = new Vector2();
-            }
         }
 
         /// <summary>
