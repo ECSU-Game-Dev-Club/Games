@@ -49,7 +49,7 @@ namespace SpaceGame
         Vector2 enemyVelocity;
         Vector2 enemyAcceleration;
         //Player Rotation redians
-        float enemyRotation;
+        double enemyRotation;
         Vector2 temp;
 
         //Enemy mass
@@ -64,7 +64,7 @@ namespace SpaceGame
         const float ENEMY_BOOST_VELOCITY = 5;
 
         //DEVELOPER FUN COMMANDS
-        const bool ENEMIES_MERCILESS = true;
+        const bool ENEMIES_MERCILESS = false;
 
         //Constructor for player, starts/initializes everything
         public EnemySwarm(float x, float y, IServiceProvider serviceProvider)
@@ -200,7 +200,7 @@ namespace SpaceGame
 
             if (players[targetIndex].getPlayerBoost() && targetAttached)
             {
-
+                targetAquired = false;
             }
 
             if (!targetAttached)
@@ -210,6 +210,7 @@ namespace SpaceGame
 
             //Updates enemy location based on velocity
             enemyLocation += enemyVelocity;
+            enemyRotation = (double)Math.Atan2((double)enemyVelocity.Y , (double)enemyVelocity.X) + (Math.PI / 2);
         }
 
         /// <summary>
@@ -254,7 +255,7 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue);
+            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue, (float)enemyRotation, enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
         }
     }
 }
