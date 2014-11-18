@@ -232,7 +232,6 @@ namespace SpaceGame
                 //Passing the keyboards vector to player1.
                 setThrust(keyboardVector);
             }
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             //If keyboard key 'Down' is pressed
             else if (keyboard.IsKeyDown(Keys.Down))
             {
@@ -243,9 +242,13 @@ namespace SpaceGame
                 setThrust(keyboardVector);
 
             }
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            //Up for Down not pressed
+            else
+            {
+                keyboardVector.Y = 0;
+            }
             //If keyboard key 'Left' is pressed
-            else if (keyboard.IsKeyDown(Keys.Left))
+            if (keyboard.IsKeyDown(Keys.Left))
             {
                 //The user is pressing LEFT so the X value is -1
                 keyboardVector.X = -1;
@@ -253,7 +256,6 @@ namespace SpaceGame
                 //Passing the keyboards vector to player1.
                 setThrust(keyboardVector);
             }
-            //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
             //If keyboard key 'Right' is pressed
             else if (keyboard.IsKeyDown(Keys.Right))
             {
@@ -263,11 +265,10 @@ namespace SpaceGame
                 //Passing the keyboards vector to player1.
                 setThrust(keyboardVector);
             }
-            //If no arrow keys are pressed
+            //Left or Right not pressed
             else
             {
                 keyboardVector.X = 0;
-                keyboardVector.Y = 0;
             }
 
             //Spacebar
