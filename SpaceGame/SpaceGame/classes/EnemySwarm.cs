@@ -49,7 +49,7 @@ namespace SpaceGame
         Vector2 enemyVelocity;
         Vector2 enemyAcceleration;
         //Player Rotation redians
-        float enemyRotation;
+        double enemyRotation;
         Vector2 temp;
 
         //Enemy mass
@@ -64,7 +64,7 @@ namespace SpaceGame
         const float ENEMY_BOOST_VELOCITY = 5;
 
         //DEVELOPER FUN COMMANDS
-        const bool ENEMIES_MERCILESS = true;
+        const bool ENEMIES_MERCILESS = false;
 
         //Constructor for player, starts/initializes everything
         public EnemySwarm(float x, float y, IServiceProvider serviceProvider)
@@ -113,7 +113,7 @@ namespace SpaceGame
                 if (players[i].isPlayerReady())//Is the player playing.
                 {
                     //Get distance between player and me
-                    playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
+                    calculateDistancesFromPlayers(players, i);
 
                     //Is the player within my vision
                     if (playersDistances[i] <= TARGET_RADIUS)
@@ -200,7 +200,12 @@ namespace SpaceGame
 
             if (players[targetIndex].getPlayerBoost() && targetAttached)
             {
+                targetAquired = false;
+                targetAttached = false;
 
+                enemyVelocity.X = -1 * players[targetIndex].getPlayerVelocityVector().X;
+
+                enemyVelocity.Y = -1 * players[targetIndex].getPlayerVelocityVector().Y;
             }
 
             if (!targetAttached)
@@ -210,6 +215,12 @@ namespace SpaceGame
 
             //Updates enemy location based on velocity
             enemyLocation += enemyVelocity;
+            enemyRotation = (double)Math.Atan2((double)enemyVelocity.Y, (double)enemyVelocity.X) + (Math.PI / 2);
+        }
+
+        public void calculateDistancesFromPlayers(Player[] players, int i)
+        {
+            playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
         }
 
         /// <summary>
@@ -227,6 +238,11 @@ namespace SpaceGame
         public Vector2 getEnemyLocationVector()
         {
             return enemyLocation;
+        }
+
+        public double getDistanceToPlayer(int init_playerIndex)
+        {
+            return playersDistances[init_playerIndex];
         }
 
         /// <summary>
@@ -254,7 +270,7 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue);
+            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue, (float)enemyRotation, enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
         }
     }
 }

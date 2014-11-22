@@ -18,6 +18,9 @@ namespace SpaceGame
         int width = 30;
         int height = 30;
 
+        //what player you are 0 = player one
+        int playerIndex;
+
         //Create a new content manager to load content used just by this level.
         ContentManager content;
 
@@ -80,15 +83,34 @@ namespace SpaceGame
         Vector2[] playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
         #endregion
 
-        //Constructor for player, starts/initializes everything
-        public Player(float x, float y, IServiceProvider serviceProvider)
+        //Constructor for player, starts/initializes everything, sets spawn location
+        public Player(float x, float y, IServiceProvider serviceProvider, int init_playerIndex)
         {
+            playerIndex = init_playerIndex;
+
             content = new ContentManager(serviceProvider, "Content");
 
             playerLocation.X = x;
             playerLocation.Y = y;
 
-            playerColor = Color.White;
+            #region"Set Player Colors"
+            if (playerIndex == 0)
+            {
+                playerColor = Color.White;
+            }
+            else if (playerIndex == 1)
+            {
+                playerColor = Color.Yellow;
+            }
+            else if (playerIndex == 2)
+            {
+                playerColor = Color.LightBlue;
+            }
+            else if (playerIndex == 3)
+            {
+                playerColor = Color.LightGreen;
+            }
+            #endregion
 
             keyboardVector = new Vector2(0, 0);
 
@@ -133,7 +155,10 @@ namespace SpaceGame
         {
             currentFrame++;
 
+            //Player is playing
             playerReady = true;
+            //Player didnt boost
+            playerBoosted = false;
 
             //Calculate acceleration
             calcAcceleration(gravityList);
@@ -219,6 +244,33 @@ namespace SpaceGame
             if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
             {
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
+            }
+
+            if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
+            {
+                if (playerIndex == 0)
+                {
+                    GamePad.SetVibration(PlayerIndex.One, 0.2f, 0);
+                }
+                else if (playerIndex == 1)
+                {
+                    GamePad.SetVibration(PlayerIndex.Two, 0.2f, 0);
+                }
+                else if (playerIndex == 2)
+                {
+                    GamePad.SetVibration(PlayerIndex.Three, 0.2f, 0);
+                }
+                else if (playerIndex == 3)
+                {
+                    GamePad.SetVibration(PlayerIndex.Four, 0.2f, 0);
+                }
+            }
+            else
+            {
+                GamePad.SetVibration(PlayerIndex.One, 0, 0);
+                GamePad.SetVibration(PlayerIndex.Two, 0, 0);
+                GamePad.SetVibration(PlayerIndex.Three, 0, 0);
+                GamePad.SetVibration(PlayerIndex.Four, 0, 0);
             }
             #endregion
 

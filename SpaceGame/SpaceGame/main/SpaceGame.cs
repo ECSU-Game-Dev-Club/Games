@@ -120,10 +120,10 @@ namespace SpaceGame
         protected override void Initialize()
         {
             //Initializes the player class for player1 with the spawn at 
-            player1 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
-            player2 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
-            player3 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
-            player4 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services);
+            player1 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services, 0);
+            player2 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services, 1);
+            player3 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services, 2);
+            player4 = new Player(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Width / 2, Services, 3);
 
             //Initializing Camera
             camera = new Camera(GraphicsDevice.Viewport);
@@ -299,14 +299,36 @@ namespace SpaceGame
 
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
 
+            //Updates enemy prototypes
             for (int i = 0; i < enemyList.Count; i++)
             {
-                enemyList[i].update(gravityList, playerArray);
+                if (enemyList[i].getDistanceToPlayer(0) < GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width)
+                {
+                    enemyList[i].update(gravityList, playerArray);
+                }
+                else
+                {
+                    for (int p = 0; p < playerArray.Length; p++)
+                    {
+                        enemyList[i].calculateDistancesFromPlayers(playerArray, p);
+                    }
+                }
             }
 
+            //Updates enemy swarms
             for (int i = 0; i < enemySwarmAttachList.Count; i++)
             {
-                enemySwarmAttachList[i].update(gravityList, playerArray);
+                if (enemySwarmAttachList[i].getDistanceToPlayer(0) < GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width)
+                {
+                    enemySwarmAttachList[i].update(gravityList, playerArray);
+                }
+                else
+                {
+                    for (int p = 0; p < playerArray.Length; p++)
+                    {
+                        enemySwarmAttachList[i].calculateDistancesFromPlayers(playerArray, p);
+                    }
+                }
             }
 
             if (devMode)
@@ -466,7 +488,7 @@ namespace SpaceGame
 
             spriteBatch.End();
 
-            #region"DEV DRAWING - STATIC"
+            #region"DEV DRAWING - STATIC - CONSOLE"
             if (devMode)
             {
                 spriteBatch.Begin();
@@ -489,6 +511,10 @@ namespace SpaceGame
                     if (i == 3)
                     {
                         spriteBatch.DrawString(font, "FPS: " + fps, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Turquoise);
+                    }
+                    if (i == 4)
+                    {
+                        spriteBatch.DrawString(font, "Total # of enemies: " + (enemySwarmAttachList.Count + enemyList.Count), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
                     }
                 }
 

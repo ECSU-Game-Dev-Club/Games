@@ -106,17 +106,13 @@ namespace SpaceGame
         //Updates the player every frame
         public void update(List<Gravity> gravityList, Player[] players)
         {
-            //Console.WriteLine("Player Velocity: " + enemyVelocity);
-            Console.WriteLine("Enemy Location: " + enemyLocation);
-            //Console.WriteLine("Player Acceleration: " + enemyAcceleration);
-
             #region"Get closest player"
             for (int i = 0; i < players.Count(); i++)
             {
                 if (players[i].isPlayerReady())//Is the player playing.
                 {
                     //Get distance between player and me
-                    playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
+                    calculateDistancesFromPlayers(players, i);
 
                     //Is the player within my vision
                     if (playersDistances[i] <= TARGET_RADIUS)
@@ -201,6 +197,11 @@ namespace SpaceGame
             enemyLocation += enemyVelocity;
         }
 
+        public void calculateDistancesFromPlayers(Player[] players, int i)
+        {
+            playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
+        }
+
         /// <summary>
         /// Which direction to thrust in
         /// </summary>
@@ -216,6 +217,11 @@ namespace SpaceGame
         public Vector2 getEnemyLocationVector()
         {
             return enemyLocation;
+        }
+
+        public double getDistanceToPlayer(int init_playerIndex)
+        {
+            return playersDistances[init_playerIndex];
         }
 
         /// <summary>
