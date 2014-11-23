@@ -71,7 +71,8 @@ namespace SpaceGame
         Camera camera;
 
         //Bullets
-        List<Bullet_prototype> gattling_bullets = new List<Bullet_prototype>();
+        List<Bullet_prototype> gattlingBullets = new List<Bullet_prototype>();
+        Texture2D gattlingBulletTexture;
 
         //1x1 white texture
         Texture2D whiteTexture;
@@ -159,6 +160,8 @@ namespace SpaceGame
             gravityTexture = Content.Load<Texture2D>("gWell");
 
             whiteTexture = Content.Load<Texture2D>("whiteTexture");
+
+            gattlingBulletTexture = Content.Load<Texture2D>("projectile_textures/gattling_bullet");
 
             #region"DEV CONTENT"
 
@@ -255,7 +258,7 @@ namespace SpaceGame
             {
                 if (player1.getCurrentWeapon() == 1) //GATTLING GUN
                 {
-                    gattling_bullets.Add(new Bullet_prototype(player1.getPlayerLocation().X, player1.getPlayerLocation().Y, player1.getPlayerVelocityVector(), player1.getAimRotation(), true, gameTime, gamePad1.ThumbSticks.Right));
+                    gattlingBullets.Add(new Bullet_prototype(player1.getPlayerLocation().X, player1.getPlayerLocation().Y, player1.getPlayerVelocityVector(), player1.getAimRotation(), true, gameTime, gamePad1.ThumbSticks.Right));
                 }
                 if (player1.getCurrentWeapon() == 2) //???
                 {
@@ -280,7 +283,7 @@ namespace SpaceGame
                 {
                     if (player2.getCurrentWeapon() == 1) //GATTLING GUN
                     {
-                        gattling_bullets.Add(new Bullet_prototype(player2.getPlayerLocation().X, player2.getPlayerLocation().Y, player2.getPlayerVelocityVector(), player2.getAimRotation(), true, gameTime, gamePad2.ThumbSticks.Right));
+                        gattlingBullets.Add(new Bullet_prototype(player2.getPlayerLocation().X, player2.getPlayerLocation().Y, player2.getPlayerVelocityVector(), player2.getAimRotation(), true, gameTime, gamePad2.ThumbSticks.Right));
                     }
                     if (player2.getCurrentWeapon() == 2) //???
                     {
@@ -311,7 +314,7 @@ namespace SpaceGame
                 {
                     if (player3.getCurrentWeapon() == 1) //GATTLING GUN
                     {
-                        gattling_bullets.Add(new Bullet_prototype(player3.getPlayerLocation().X, player3.getPlayerLocation().Y, player3.getPlayerVelocityVector(), player3.getAimRotation(), true, gameTime, gamePad3.ThumbSticks.Right));
+                        gattlingBullets.Add(new Bullet_prototype(player3.getPlayerLocation().X, player3.getPlayerLocation().Y, player3.getPlayerVelocityVector(), player3.getAimRotation(), true, gameTime, gamePad3.ThumbSticks.Right));
                     }
                     if (player3.getCurrentWeapon() == 2) //???
                     {
@@ -342,7 +345,7 @@ namespace SpaceGame
                 {
                     if (player4.getCurrentWeapon() == 1) //GATTLING GUN
                     {
-                        gattling_bullets.Add(new Bullet_prototype(player4.getPlayerLocation().X, player4.getPlayerLocation().Y, player4.getPlayerVelocityVector(), player4.getAimRotation(), true, gameTime, gamePad4.ThumbSticks.Right));
+                        gattlingBullets.Add(new Bullet_prototype(player4.getPlayerLocation().X, player4.getPlayerLocation().Y, player4.getPlayerVelocityVector(), player4.getAimRotation(), true, gameTime, gamePad4.ThumbSticks.Right));
                     }
                     if (player4.getCurrentWeapon() == 2) //???
                     {
@@ -374,14 +377,20 @@ namespace SpaceGame
 
             #region"Updates bullets and checks collisions"
             //Updates all bullets
-            for (int i = 0; i < gattling_bullets.Count; i++)
+            for (int i = 0; i < gattlingBullets.Count; i++)
             {
                 //Update the bullets
-                gattling_bullets[i].update(gameTime);
+                gattlingBullets[i].update(gameTime);
 
                 //Save processing power check ALL enemy
                 for (int e = 0; e < (enemyList.Count + enemySwarmAttachList.Count); e++)
                 {
+                    //delete bullets
+                    if (gattlingBullets[i].deleteMe())
+                    {
+                        gattlingBullets.RemoveAt(i);
+                    }
+
                     //Check enemyList
                     if(e < enemyList.Count)
                     {
@@ -389,9 +398,10 @@ namespace SpaceGame
                         if (!enemyList[e].getIdle())
                         {
                             //If hit
-                            if (gattling_bullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
+                            if (gattlingBullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
                             {
                                 enemyList.RemoveAt(e);
+                                gattlingBullets.RemoveAt(i);
                             }
                         }
                     }
@@ -402,19 +412,14 @@ namespace SpaceGame
                         if (!enemySwarmAttachList[e].getIdle())
                         {
                             //If hit
-                            if (gattling_bullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()))
+                            if (gattlingBullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()))
                             {
                                 enemySwarmAttachList.RemoveAt(e);
+                                gattlingBullets.RemoveAt(i);
                             }
                         }
                     }
-                }
-
-                //delete bullets
-                if (gattling_bullets[i].deleteMe())
-                {
-                    gattling_bullets.RemoveAt(i);
-                }
+                }                
             }
             #endregion
 
@@ -558,9 +563,9 @@ namespace SpaceGame
             }
 
             //Draws bullets
-            for (int i = 0; i < gattling_bullets.Count; i++)
+            for (int i = 0; i < gattlingBullets.Count; i++)
             {
-                spriteBatch.Draw(whiteTexture, gattling_bullets[i].getLocationVector(), gattling_bullets[i].getRectangle(), Color.Yellow, gattling_bullets[i].getRotation(), gattling_bullets[i].getBulletOrigin(), 1.0f, SpriteEffects.None, 0);
+                spriteBatch.Draw(gattlingBulletTexture, gattlingBullets[i].getLocationVector(), gattlingBullets[i].getRectangle(), Color.Yellow, gattlingBullets[i].getRotation(), gattlingBullets[i].getBulletOrigin(), 2.0f, SpriteEffects.None, 0);
 
             }
 
@@ -665,7 +670,7 @@ namespace SpaceGame
                     }
                     if (i == 6)
                     {
-                        spriteBatch.DrawString(font, "Total # of bullets: " + gattling_bullets.Count, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
+                        spriteBatch.DrawString(font, "Total # of bullets: " + gattlingBullets.Count, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
                     }
                 }
 

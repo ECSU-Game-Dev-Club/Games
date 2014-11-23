@@ -295,7 +295,7 @@ namespace SpaceGame
             #endregion
 
             #region"Weapons"
-            if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
+            if (gamePad.Triggers.Left > 0.2 || gamePad.Triggers.Right > 0.2)
             {
                 //GATTLING
                 if (currentWeapon == 1)
@@ -320,6 +320,7 @@ namespace SpaceGame
                     else
                     {
                         playerShooting = false;
+
                         //gameTime.TotalGameTime.Seconds reverts back to 0 after 60 seconds has past.
                         //So make gameTimeStampSecond relative
                         if (Math.Abs(gameTimeStampSecond - gameTime.TotalGameTime.Seconds) > 2)
@@ -353,6 +354,10 @@ namespace SpaceGame
                 {
                     //???
                 }
+            }
+            else
+            {
+                playerShooting = false;
             }
             #endregion
 
@@ -439,16 +444,6 @@ namespace SpaceGame
 
             playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X, (-1) * gamePad.ThumbSticks.Right.Y);
 
-            //Triggers
-            if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
-            {
-                playerShooting = true;
-            }
-            else
-            {
-                playerShooting = false;
-            }
-
             #region"D-Pad"
             //Gatling
             if (gamePad.DPad.Up != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Up == ButtonState.Pressed)
@@ -469,6 +464,68 @@ namespace SpaceGame
             if (gamePad.DPad.Right != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Right == ButtonState.Pressed)
             {
                 currentWeapon = 4;
+            }
+            #endregion
+
+            #region"Weapons"
+            if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
+            {
+                //GATTLING
+                if (currentWeapon == 1)
+                {
+                    //If gameTimeStampMillisecond and gameTimeStampSecond are less than actual gameTime (FREQUENCY in which you can shoot the gattling)
+                    if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond && gameTime.TotalGameTime.Seconds >= gameTimeStampSecond)
+                    {
+                        playerShooting = true;
+
+                        //Since milliseconds reverts to 0 after 1000, modulate it
+                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+
+                        //Update seconds
+                        gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
+
+                        //Yeah...
+                        if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond)
+                        {
+                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds + 1;
+                        }
+                    }
+                    else
+                    {
+                        playerShooting = false;
+                        //gameTime.TotalGameTime.Seconds reverts back to 0 after 60 seconds has past.
+                        //So make gameTimeStampSecond relative
+                        if (Math.Abs(gameTimeStampSecond - gameTime.TotalGameTime.Seconds) > 2)
+                        {
+                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
+                        }
+
+                        //For some reason bugs happen and sometimes gameTimeStampSecond is less then actual time.
+                        //So we catch it here
+                        if (gameTimeStampSecond < gameTime.TotalGameTime.Seconds)
+                        {
+                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
+                        }
+                        //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
+                        //So we catch it here
+                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000)
+                        {
+                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                        }
+                    }
+                }
+                if (currentWeapon == 2)
+                {
+                    //???
+                }
+                if (currentWeapon == 3)
+                {
+                    //???
+                }
+                if (currentWeapon == 4)
+                {
+                    //???
+                }
             }
             #endregion
         }
