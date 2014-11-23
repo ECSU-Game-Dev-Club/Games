@@ -18,7 +18,7 @@ namespace SpaceGame
         int width = 30;
         int height = 30;
 
-        //what player you are 0 = player one
+        //what player you are (0 = player one)
         int playerIndex;
 
         //Create a new content manager to load content used just by this level.
@@ -49,6 +49,19 @@ namespace SpaceGame
         //Players vector2 location delta
         Vector2 playerLocationDelta;
 
+        #region"Weapons"
+        //Is player shooting
+        bool playerShooting = false;
+
+        //GameTime Stamp
+        int gameTimeStampMillisecond;
+        int gameTimeStampSecond;
+        const int GATTLING_FREQUENCY = 75;//in milliseconds
+
+        //Current weapon(1=gattling 2=??? 3=??? 4=???)
+        int currentWeapon = 1;
+        #endregion
+
         #region"Movement Variables"
 
         //Players velocity and acceleration for calculating speed
@@ -56,6 +69,7 @@ namespace SpaceGame
         Vector2 playerAcceleration;
         //Player Rotation redians
         float playerRotation;
+        float playerAimRotation;
 
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
@@ -93,6 +107,9 @@ namespace SpaceGame
             playerLocation.X = x;
             playerLocation.Y = y;
 
+            gameTimeStampMillisecond = 0;
+            gameTimeStampSecond = 0;
+
             #region"Set Player Colors"
             if (playerIndex == 0)
             {
@@ -125,6 +142,7 @@ namespace SpaceGame
             playerOrigin.Y = height / 2;
 
             playerRotation = 0;
+            playerAimRotation = 0;
 
             this.LoadContent();
         }
@@ -151,7 +169,7 @@ namespace SpaceGame
         /// /// <param name="keyboard">Provides keyboard state.</param>
         /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
-        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, List<Gravity> gravityList)
+        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
             currentFrame++;
 
@@ -160,11 +178,11 @@ namespace SpaceGame
             //Player didnt boost
             playerBoosted = false;
 
+            //Figure out if user wants player to move(movement logic)
+            playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
+
             //Calculate acceleration
             calcAcceleration(gravityList);
-
-            //Figure out if user wants player to move(movement logic)
-            playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE);
 
             //Updates player location based on velocity
             playerLocation += playerVelocity;
@@ -188,7 +206,7 @@ namespace SpaceGame
         /// <param name="gamepad">Provides gamepad state.(Buttons</param>
         /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.(Buttons</param>
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
-        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList)
+        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
             //Player is playing
             playerReady = true;
@@ -199,7 +217,7 @@ namespace SpaceGame
             calcAcceleration(gravityList);
 
             //Figure out if user wants player to move(movement logic)
-            playerControls(gamepad, gamepad_OLDSTATE);
+            playerControls(gamepad, gamepad_OLDSTATE, gameTime);
 
             //Updates player location based on velocity
             playerLocation += playerVelocity;
@@ -230,7 +248,7 @@ namespace SpaceGame
         /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
         /// /// <param name="keyboard">Provides keyboard state.</param>
         /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
-        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE)
+        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, GameTime gameTime)
         {
             #region"GamePad Movement Logic"
             //If the user moves the left thumbstick(in any direction)
@@ -238,6 +256,11 @@ namespace SpaceGame
             {
                 //Pass the X and Y value to the thrust method in the Player class
                 setThrust(gamePad.ThumbSticks.Left);
+                //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
+            }
+            else
+            {
+                GamePad.SetVibration(PlayerIndex.One, 0, 0);
             }
 
             //left shoulder or spacebar was clicked(pressed, then released)
@@ -246,32 +269,93 @@ namespace SpaceGame
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
 
+            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+
+            #region"D-Pad"
+            //Gatling
+            if (gamePad.DPad.Up != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Up == ButtonState.Pressed)
+            {
+                currentWeapon = 1;
+            }
+            //???
+            if (gamePad.DPad.Left != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Left == ButtonState.Pressed)
+            {
+                currentWeapon = 2;
+            }
+            //???
+            if (gamePad.DPad.Down != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Down == ButtonState.Pressed)
+            {
+                currentWeapon = 3;
+            }
+            //???
+            if (gamePad.DPad.Right != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Right == ButtonState.Pressed)
+            {
+                currentWeapon = 4;
+            }
+            #endregion
+
+            #region"Weapons"
             if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
             {
-                if (playerIndex == 0)
+                //GATTLING
+                if (currentWeapon == 1)
                 {
-                    GamePad.SetVibration(PlayerIndex.One, 0.2f, 0);
+                    //If gameTimeStampMillisecond and gameTimeStampSecond are less than actual gameTime (FREQUENCY in which you can shoot the gattling)
+                    if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond && gameTime.TotalGameTime.Seconds >= gameTimeStampSecond)
+                    {
+                        playerShooting = true;
+
+                        //Since milliseconds reverts to 0 after 1000, modulate it
+                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+
+                        //Update seconds
+                        gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
+
+                        //Yeah...
+                        if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond)
+                        {
+                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds + 1;
+                        }
+                    }
+                    else
+                    {
+                        playerShooting = false;
+                        //gameTime.TotalGameTime.Seconds reverts back to 0 after 60 seconds has past.
+                        //So make gameTimeStampSecond relative
+                        if (Math.Abs(gameTimeStampSecond - gameTime.TotalGameTime.Seconds) > 2)
+                        {
+                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
+                        }
+
+                        //For some reason bugs happen and sometimes gameTimeStampSecond is less then actual time.
+                        //So we catch it here
+                        if (gameTimeStampSecond < gameTime.TotalGameTime.Seconds)
+                        {
+                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
+                        }
+                        //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
+                        //So we catch it here
+                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000)
+                        {
+                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                        }
+                    }
                 }
-                else if (playerIndex == 1)
+                if (currentWeapon == 2)
                 {
-                    GamePad.SetVibration(PlayerIndex.Two, 0.2f, 0);
+                    //???
                 }
-                else if (playerIndex == 2)
+                if (currentWeapon == 3)
                 {
-                    GamePad.SetVibration(PlayerIndex.Three, 0.2f, 0);
+                    //???
                 }
-                else if (playerIndex == 3)
+                if (currentWeapon == 4)
                 {
-                    GamePad.SetVibration(PlayerIndex.Four, 0.2f, 0);
+                    //???
                 }
             }
-            else
-            {
-                GamePad.SetVibration(PlayerIndex.One, 0, 0);
-                GamePad.SetVibration(PlayerIndex.Two, 0, 0);
-                GamePad.SetVibration(PlayerIndex.Three, 0, 0);
-                GamePad.SetVibration(PlayerIndex.Four, 0, 0);
-            }
+            #endregion
+
             #endregion
 
             #region"Keyboard Movement Logic"
@@ -338,7 +422,7 @@ namespace SpaceGame
         /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
         /// /// <param name="keyboard">Provides keyboard state.</param>
         /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
-        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE)
+        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, GameTime gameTime)
         {
             //If the user moves the left thumbstick(in any direction)
             if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
@@ -352,6 +436,41 @@ namespace SpaceGame
             {
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
+
+            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X, (-1) * gamePad.ThumbSticks.Right.Y);
+
+            //Triggers
+            if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
+            {
+                playerShooting = true;
+            }
+            else
+            {
+                playerShooting = false;
+            }
+
+            #region"D-Pad"
+            //Gatling
+            if (gamePad.DPad.Up != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Up == ButtonState.Pressed)
+            {
+                currentWeapon = 1;
+            }
+            //???
+            if (gamePad.DPad.Left != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Left == ButtonState.Pressed)
+            {
+                currentWeapon = 2;
+            }
+            //???
+            if (gamePad.DPad.Down != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Down == ButtonState.Pressed)
+            {
+                currentWeapon = 3;
+            }
+            //???
+            if (gamePad.DPad.Right != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Right == ButtonState.Pressed)
+            {
+                currentWeapon = 4;
+            }
+            #endregion
         }
         #endregion
 
@@ -436,9 +555,29 @@ namespace SpaceGame
             }
         }
 
+        public bool isPlayerShooting()
+        {
+            return playerShooting;
+        }
+
         public bool isPlayerReady()
         {
             return playerReady;
+        }
+
+        public int getCurrentWeapon()
+        {
+            return currentWeapon;
+        }
+
+        public float getAimRotation()
+        {
+            return playerAimRotation;
+        }
+
+        public float getRotation()
+        {
+            return playerRotation;
         }
 
         public bool getPlayerBoost()

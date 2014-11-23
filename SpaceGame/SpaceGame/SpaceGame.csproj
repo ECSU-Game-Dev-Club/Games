@@ -77,10 +77,11 @@
   <ItemGroup>
     <Compile Include="classes\Background.cs" />
     <Compile Include="classes\Camera.cs" />
-    <Compile Include="classes\EnemySwarm.cs" />
-    <Compile Include="classes\Enemy_prototype.cs" />
+    <Compile Include="enemies\EnemySwarm.cs" />
+    <Compile Include="enemies\Enemy_prototype.cs" />
     <Compile Include="classes\Gravity.cs" />
     <Compile Include="classes\Player.cs" />
+    <Compile Include="projectiles\Bullet_prototype.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="main\SpaceGame.cs" />

@@ -15,8 +15,15 @@ namespace SpaceGame
     {
         Rectangle enemyRectangle;
         Rectangle enemyPredictedRectangle;
-        int width = 20;
-        int height = 20;
+        const int WIDTH = 20;
+        const int HEIGHT = 20;
+
+        Rectangle enemyHitBox;
+        const int ENEMY_HITBOX_WIDTH = 20;
+        const int ENEMY_HITBOX_HEIGHT = 20;
+
+        //Is enemy idle?
+        bool enemyIdle = true;
 
         //Create a new content manager to load content used just by this level.
         ContentManager content;
@@ -80,11 +87,13 @@ namespace SpaceGame
 
             enemyAcceleration = new Vector2(0, 0);
 
-            enemyRectangle = new Rectangle(0, 0, width, height);
+            enemyHitBox = new Rectangle((int)enemyLocation.X, (int)enemyLocation.Y, ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT);
+
+            enemyRectangle = new Rectangle(0, 0, WIDTH, HEIGHT);
             enemyPredictedRectangle = new Rectangle(0, 0, 30, 30);
 
-            enemyOrigin.X = width / 2;
-            enemyOrigin.Y = height / 2;
+            enemyOrigin.X = WIDTH / 2;
+            enemyOrigin.Y = HEIGHT / 2;
 
             enemyRotation = 0;
 
@@ -106,95 +115,111 @@ namespace SpaceGame
         //Updates the player every frame
         public void update(List<Gravity> gravityList, Player[] players)
         {
-            #region"Get closest player"
-            for (int i = 0; i < players.Count(); i++)
+            if (enemyIdle)
             {
-                if (players[i].isPlayerReady())//Is the player playing.
+                for (int i = 0; i < players.Count(); i++)
                 {
-                    //Get distance between player and me
-                    calculateDistancesFromPlayers(players, i);
-
-                    //Is the player within my vision
-                    if (playersDistances[i] <= TARGET_RADIUS)
+                    if (players[i].isPlayerReady())//Is the player playing.
                     {
-                        //If no target
-                        if (!targetAquired)
+                        //Get distance between player and me
+                        calculateDistancesFromPlayers(players, i);
+                    }
+                }
+            }
+            else
+            {
+                #region"Get closest player"
+                for (int i = 0; i < players.Count(); i++)
+                {
+                    if (players[i].isPlayerReady())//Is the player playing.
+                    {
+                        //Get distance between player and me
+                        calculateDistancesFromPlayers(players, i);
+
+                        //Is the player within my vision
+                        if (playersDistances[i] <= TARGET_RADIUS)
                         {
-                            //Target found
-                            targetAquired = true;
-
-                            //Keep track of what player I am targeting
-                            targetIndex = i;
-
-                            //Keep track of distance between the target and me
-                            targetDistance = playersDistances[i];
-                        }
-                        //If I am targetting something
-                        else
-                        {
-                            //Update the targets distance
-                            targetDistance = playersDistances[targetIndex];
-
-                            //If a player is closer than the target
-                            if (playersDistances[i] < targetDistance)
+                            //If no target
+                            if (!targetAquired)
                             {
-                                //Keep track of which player is closer than target
+                                //Target found
+                                targetAquired = true;
+
+                                //Keep track of what player I am targeting
                                 targetIndex = i;
 
                                 //Keep track of distance between the target and me
                                 targetDistance = playersDistances[i];
                             }
+                            //If I am targetting something
+                            else
+                            {
+                                //Update the targets distance
+                                targetDistance = playersDistances[targetIndex];
+
+                                //If a player is closer than the target
+                                if (playersDistances[i] < targetDistance)
+                                {
+                                    //Keep track of which player is closer than target
+                                    targetIndex = i;
+
+                                    //Keep track of distance between the target and me
+                                    targetDistance = playersDistances[i];
+                                }
+                            }
                         }
                     }
                 }
+
+                if (!ENEMIES_MERCILESS)
+                {
+                    if (targetDistance > TARGET_RADIUS)
+                    {
+                        targetAquired = false;
+                    }
+                }
+                #endregion
+
+                //If target acquired update the target vector with the targets position
+                if (targetAquired)
+                {
+                    //Update targets location
+                    targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
+                    targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
+
+                    //Move toward target
+                    if (targetVector.X < enemyLocation.X)
+                    {
+                        enemyThrust.X = -1;
+                    }
+                    if (targetVector.X > enemyLocation.X)
+                    {
+                        enemyThrust.X = 1;
+                    }
+                    if (targetVector.Y < enemyLocation.Y)
+                    {
+                        enemyThrust.Y = -1;
+                    }
+                    if (targetVector.Y > enemyLocation.Y)
+                    {
+                        enemyThrust.Y = 1;
+                    }
+                }
+                //NO TARGET
+                else
+                {
+                    //This is where he needs to orbit a gWell or slow down to a stop
+                    targetVector.X = 0;
+                    targetVector.Y = 0;
+                }
+
+                calcAcceleration(gravityList);
+
+                //Updates enemy location based on velocity
+                enemyLocation += enemyVelocity;
+
+                enemyHitBox = new Rectangle((int)enemyLocation.X, (int)enemyLocation.Y, ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT);
             }
-
-            if (!ENEMIES_MERCILESS)
-            {
-                if (targetDistance > TARGET_RADIUS)
-                {
-                    targetAquired = false;
-                }
-            }
-            #endregion
-
-            //If target acquired update the target vector with the targets position
-            if (targetAquired)
-            {
-                //Update targets location
-                targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
-                targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
-
-                //Move toward target
-                if (targetVector.X < enemyLocation.X)
-                {
-                    enemyThrust.X = -1;
-                }
-                if (targetVector.X > enemyLocation.X)
-                {
-                    enemyThrust.X = 1;
-                }
-                if (targetVector.Y < enemyLocation.Y)
-                {
-                    enemyThrust.Y = -1;
-                }
-                if (targetVector.Y > enemyLocation.Y)
-                {
-                    enemyThrust.Y = 1;
-                }
-            }
-            //NO TARGET
-            else
-            {
-                //This is where he needs to orbit a gWell or slow down to a stop
-                targetVector.X = 0;
-                targetVector.Y = 0;
-            }
-
-            calcAcceleration(gravityList);
-
-            //Updates enemy location based on velocity
-            enemyLocation += enemyVelocity;
         }
 
         public void calculateDistancesFromPlayers(Player[] players, int i)
@@ -222,6 +247,26 @@ namespace SpaceGame
         public double getDistanceToPlayer(int init_playerIndex)
         {
             return playersDistances[init_playerIndex];
+        }
+
+        public Rectangle getEnemyRectangle()
+        {
+            return enemyRectangle;
+        }
+
+        public Rectangle getEnemyHitBox()
+        {
+            return enemyHitBox;
+        }
+
+        public bool getIdle()
+        {
+            return enemyIdle;
+        }
+
+        public void setIdle(bool idle)
+        {
+            enemyIdle = idle;
         }
 
         /// <summary>

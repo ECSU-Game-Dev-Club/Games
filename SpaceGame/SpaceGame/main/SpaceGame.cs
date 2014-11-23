@@ -70,6 +70,12 @@ namespace SpaceGame
         //Sets up camera class
         Camera camera;
 
+        //Bullets
+        List<Bullet_prototype> gattling_bullets = new List<Bullet_prototype>();
+
+        //1x1 white texture
+        Texture2D whiteTexture;
+
         #region"Developer Stuff"
         List<Enemy_prototype> enemyList = new List<Enemy_prototype>();
         List<EnemySwarm> enemySwarmAttachList = new List<EnemySwarm>();
@@ -151,6 +157,8 @@ namespace SpaceGame
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             gravityTexture = Content.Load<Texture2D>("gWell");
+
+            whiteTexture = Content.Load<Texture2D>("whiteTexture");
 
             #region"DEV CONTENT"
 
@@ -242,46 +250,172 @@ namespace SpaceGame
 
             #region"Updates all players"
 
-            //Updates the player1 class and passes all inputs
-            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList);
+            #region"Player 1"
+            if (player1.isPlayerShooting())
+            {
+                if (player1.getCurrentWeapon() == 1) //GATTLING GUN
+                {
+                    gattling_bullets.Add(new Bullet_prototype(player1.getPlayerLocation().X, player1.getPlayerLocation().Y, player1.getPlayerVelocityVector(), player1.getAimRotation(), true, gameTime, gamePad1.ThumbSticks.Right));
+                }
+                if (player1.getCurrentWeapon() == 2) //???
+                {
 
-            //If player 2 is playing
+                }
+                if (player1.getCurrentWeapon() == 3) //???
+                {
+
+                }
+                if (player1.getCurrentWeapon() == 4) //???
+                {
+
+                }
+            }
+            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList, gameTime);
+            #endregion
+
+            #region"Player 2"
             if (player2.isPlayerReady())
             {
+                if (player2.isPlayerShooting())
+                {
+                    if (player2.getCurrentWeapon() == 1) //GATTLING GUN
+                    {
+                        gattling_bullets.Add(new Bullet_prototype(player2.getPlayerLocation().X, player2.getPlayerLocation().Y, player2.getPlayerVelocityVector(), player2.getAimRotation(), true, gameTime, gamePad2.ThumbSticks.Right));
+                    }
+                    if (player2.getCurrentWeapon() == 2) //???
+                    {
+
+                    }
+                    if (player2.getCurrentWeapon() == 3) //???
+                    {
+
+                    }
+                    if (player2.getCurrentWeapon() == 4) //???
+                    {
+
+                    }
+                }
                 //Updates the player2 class and passes all inputs
-                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList);
+                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList, gameTime);
             }
             else
             {
                 player2.updateDynamicSpawn(player1);
             }
+            #endregion
 
-            //If player 3 is playing
+            #region"Player 3"
             if (player3.isPlayerReady())
             {
+                if (player3.isPlayerShooting())
+                {
+                    if (player3.getCurrentWeapon() == 1) //GATTLING GUN
+                    {
+                        gattling_bullets.Add(new Bullet_prototype(player3.getPlayerLocation().X, player3.getPlayerLocation().Y, player3.getPlayerVelocityVector(), player3.getAimRotation(), true, gameTime, gamePad3.ThumbSticks.Right));
+                    }
+                    if (player3.getCurrentWeapon() == 2) //???
+                    {
+
+                    }
+                    if (player3.getCurrentWeapon() == 3) //???
+                    {
+
+                    }
+                    if (player3.getCurrentWeapon() == 4) //???
+                    {
+
+                    }
+                }
                 //Updates the player3 class and passes all inputs
-                player3.update(gamePad1, gamePad1_OLDSTATE, gravityList);
+                player3.update(gamePad3, gamePad3_OLDSTATE, gravityList, gameTime);
             }
             else
             {
                 player3.updateDynamicSpawn(player1);
             }
+            #endregion
 
-            //If player 4 is playing
+            #region"Player 4"
             if (player4.isPlayerReady())
             {
+                if (player4.isPlayerShooting())
+                {
+                    if (player4.getCurrentWeapon() == 1) //GATTLING GUN
+                    {
+                        gattling_bullets.Add(new Bullet_prototype(player4.getPlayerLocation().X, player4.getPlayerLocation().Y, player4.getPlayerVelocityVector(), player4.getAimRotation(), true, gameTime, gamePad4.ThumbSticks.Right));
+                    }
+                    if (player4.getCurrentWeapon() == 2) //???
+                    {
+
+                    }
+                    if (player4.getCurrentWeapon() == 3) //???
+                    {
+
+                    }
+                    if (player4.getCurrentWeapon() == 4) //???
+                    {
+
+                    }
+                }
                 //Updates the player4 class and passes all inputs
-                player4.update(gamePad1, gamePad1_OLDSTATE, gravityList);
+                player4.update(gamePad4, gamePad4_OLDSTATE, gravityList, gameTime);
             }
             else
             {
                 player4.updateDynamicSpawn(player1);
             }
+            #endregion
 
             playerArray[0] = player1;
             playerArray[1] = player2;
             playerArray[2] = player3;
             playerArray[3] = player4;
+            #endregion
+
+            #region"Updates bullets and checks collisions"
+            //Updates all bullets
+            for (int i = 0; i < gattling_bullets.Count; i++)
+            {
+                //Update the bullets
+                gattling_bullets[i].update(gameTime);
+
+                //Save processing power check ALL enemy
+                for (int e = 0; e < (enemyList.Count + enemySwarmAttachList.Count); e++)
+                {
+                    //Check enemyList
+                    if(e < enemyList.Count)
+                    {
+                        //If not idle
+                        if (!enemyList[e].getIdle())
+                        {
+                            //If hit
+                            if (gattling_bullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
+                            {
+                                enemyList.RemoveAt(e);
+                            }
+                        }
+                    }
+                    //Check enemySwarm
+                    if (e < enemySwarmAttachList.Count)
+                    {
+                        //If not idle
+                        if (!enemySwarmAttachList[e].getIdle())
+                        {
+                            //If hit
+                            if (gattling_bullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()))
+                            {
+                                enemySwarmAttachList.RemoveAt(e);
+                            }
+                        }
+                    }
+                }
+
+                //delete bullets
+                if (gattling_bullets[i].deleteMe())
+                {
+                    gattling_bullets.RemoveAt(i);
+                }
+            }
             #endregion
 
             //Updates camera by passing the players rectangle and gametime
@@ -302,33 +436,35 @@ namespace SpaceGame
             //Updates enemy prototypes
             for (int i = 0; i < enemyList.Count; i++)
             {
+                //IF ENEMY IS CLOSE ENEOUGH - IDLE = FALSE
                 if (enemyList[i].getDistanceToPlayer(0) < GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width)
                 {
-                    enemyList[i].update(gravityList, playerArray);
+                    enemyList[i].setIdle(false);
                 }
+                //IF NOT - IDLE = TRUE
                 else
                 {
-                    for (int p = 0; p < playerArray.Length; p++)
-                    {
-                        enemyList[i].calculateDistancesFromPlayers(playerArray, p);
-                    }
+                    enemyList[i].setIdle(true);
                 }
+
+                enemyList[i].update(gravityList, playerArray);
             }
 
             //Updates enemy swarms
             for (int i = 0; i < enemySwarmAttachList.Count; i++)
             {
+                //IF ENEMY IS CLOSE ENEOUGH -> IDLE = FALSE
                 if (enemySwarmAttachList[i].getDistanceToPlayer(0) < GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width)
                 {
-                    enemySwarmAttachList[i].update(gravityList, playerArray);
+                    enemySwarmAttachList[i].setIdle(false);
                 }
+                //IF NOT -> IDLE = TRUE
                 else
                 {
-                    for (int p = 0; p < playerArray.Length; p++)
-                    {
-                        enemySwarmAttachList[i].calculateDistancesFromPlayers(playerArray, p);
-                    }
+                    enemySwarmAttachList[i].setIdle(true);
                 }
+
+                enemySwarmAttachList[i].update(gravityList, playerArray);
             }
 
             if (devMode)
@@ -421,9 +557,16 @@ namespace SpaceGame
                 enemySwarmAttachList[i].Draw(spriteBatch);
             }
 
-            #region"Draw all players"
-            //Draw everything in player1 class
-            player1.Draw(spriteBatch);
+            //Draws bullets
+            for (int i = 0; i < gattling_bullets.Count; i++)
+            {
+                spriteBatch.Draw(whiteTexture, gattling_bullets[i].getLocationVector(), gattling_bullets[i].getRectangle(), Color.Yellow, gattling_bullets[i].getRotation(), gattling_bullets[i].getBulletOrigin(), 1.0f, SpriteEffects.None, 0);
+
+            }
+
+                #region"Draw all players"
+                //Draw everything in player1 class
+                player1.Draw(spriteBatch);
 
             //Draw everything in player2 class
             if (player2.isPlayerReady())
@@ -498,23 +641,31 @@ namespace SpaceGame
                 {
                     if (i == 0)
                     {
-                        spriteBatch.DrawString(font, "Player Velocity: {X:" + player1.getPlayerVelocityVector().X + "} {Y: " + player1.getPlayerVelocityVector().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
+                        spriteBatch.DrawString(font, "Left Thumbstick: " + gamePad1.ThumbSticks.Left + " Right Thumbstick: " + gamePad1.ThumbSticks.Right, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Green);
                     }
                     if (i == 1)
                     {
-                        spriteBatch.DrawString(font, "Player Acceleration: {X:" + player1.getPlayerAccelerationVector().X + "} {Y: " + player1.getPlayerAccelerationVector().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
+                        spriteBatch.DrawString(font, "Player Velocity: {X:" + player1.getPlayerVelocityVector().X + "} {Y: " + player1.getPlayerVelocityVector().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
                     }
                     if (i == 2)
                     {
-                        spriteBatch.DrawString(font, "Player Location: {X:" + player1.getPlayerLocation().X + "} {Y: " + player1.getPlayerLocation().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
+                        spriteBatch.DrawString(font, "Player Acceleration: {X:" + player1.getPlayerAccelerationVector().X + "} {Y: " + player1.getPlayerAccelerationVector().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
                     }
                     if (i == 3)
                     {
-                        spriteBatch.DrawString(font, "FPS: " + fps, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Turquoise);
+                        spriteBatch.DrawString(font, "Player Location: {X:" + player1.getPlayerLocation().X + "} {Y: " + player1.getPlayerLocation().Y + "}", new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Yellow);
                     }
                     if (i == 4)
                     {
+                        spriteBatch.DrawString(font, "FPS: " + fps, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Turquoise);
+                    }
+                    if (i == 5)
+                    {
                         spriteBatch.DrawString(font, "Total # of enemies: " + (enemySwarmAttachList.Count + enemyList.Count), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
+                    }
+                    if (i == 6)
+                    {
+                        spriteBatch.DrawString(font, "Total # of bullets: " + gattling_bullets.Count, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
                     }
                 }
 
