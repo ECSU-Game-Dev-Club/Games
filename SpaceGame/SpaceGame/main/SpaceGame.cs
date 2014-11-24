@@ -161,7 +161,7 @@ namespace SpaceGame
 
             whiteTexture = Content.Load<Texture2D>("whiteTexture");
 
-            gattlingBulletTexture = Content.Load<Texture2D>("projectile_textures/gattling_bullet");
+            gattlingBulletTexture = Content.Load<Texture2D>("projectile_textures/Bullet2");
 
             #region"DEV CONTENT"
 
@@ -382,26 +382,30 @@ namespace SpaceGame
                 //Update the bullets
                 gattlingBullets[i].update(gameTime);
 
+                //Deleted bullets past their lifetime
+                if (gattlingBullets[i].deleteMe())
+                {
+                    gattlingBullets.RemoveAt(i);
+                }
+
                 //Save processing power check ALL enemy
                 for (int e = 0; e < (enemyList.Count + enemySwarmAttachList.Count); e++)
                 {
-                    //delete bullets
-                    if (gattlingBullets[i].deleteMe())
-                    {
-                        gattlingBullets.RemoveAt(i);
-                    }
-
                     //Check enemyList
-                    if(e < enemyList.Count)
+                    if (e < enemyList.Count)
                     {
                         //If not idle
                         if (!enemyList[e].getIdle())
                         {
-                            //If hit
-                            if (gattlingBullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
+                                
+                            if (i < gattlingBullets.Count)
                             {
-                                enemyList.RemoveAt(e);
-                                gattlingBullets.RemoveAt(i);
+                                //If hit
+                                if (gattlingBullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
+                                {
+                                    enemyList.RemoveAt(e);
+                                    gattlingBullets.RemoveAt(i);
+                                }
                             }
                         }
                     }
@@ -411,15 +415,18 @@ namespace SpaceGame
                         //If not idle
                         if (!enemySwarmAttachList[e].getIdle())
                         {
-                            //If hit
-                            if (gattlingBullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()))
+                            if (i < gattlingBullets.Count)
                             {
-                                enemySwarmAttachList.RemoveAt(e);
-                                gattlingBullets.RemoveAt(i);
+                                //If hit
+                                if (gattlingBullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()) && !enemySwarmAttachList[e].getAttached())
+                                {
+                                    enemySwarmAttachList.RemoveAt(e);
+                                    gattlingBullets.RemoveAt(i);
+                                }
                             }
                         }
                     }
-                }                
+                }
             }
             #endregion
 
@@ -487,8 +494,8 @@ namespace SpaceGame
                 //Right Mouse Button
                 if (mouse.RightButton != ButtonState.Pressed && mouse_OLDSTATE.RightButton == ButtonState.Pressed)
                 {
-                    enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
-                    //enemySwarmAttachList.Add(new EnemySwarm(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+                    //enemyList.Add(new Enemy_prototype(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
+                    enemySwarmAttachList.Add(new EnemySwarm(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, Services));
                 }
                 //Left Mouse Button
                 if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)

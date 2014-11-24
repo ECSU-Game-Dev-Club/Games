@@ -468,7 +468,7 @@ namespace SpaceGame
             #endregion
 
             #region"Weapons"
-            if (gamePad.Triggers.Left > 0 || gamePad.Triggers.Right > 0)
+            if (gamePad.Triggers.Left > 0.2 || gamePad.Triggers.Right > 0.2)
             {
                 //GATTLING
                 if (currentWeapon == 1)
@@ -493,6 +493,7 @@ namespace SpaceGame
                     else
                     {
                         playerShooting = false;
+
                         //gameTime.TotalGameTime.Seconds reverts back to 0 after 60 seconds has past.
                         //So make gameTimeStampSecond relative
                         if (Math.Abs(gameTimeStampSecond - gameTime.TotalGameTime.Seconds) > 2)
@@ -526,6 +527,10 @@ namespace SpaceGame
                 {
                     //???
                 }
+            }
+            else
+            {
+                playerShooting = false;
             }
             #endregion
         }

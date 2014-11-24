@@ -262,6 +262,11 @@ namespace SpaceGame
             return enemyLocation;
         }
 
+        public bool getAttached()
+        {
+            return targetAttached;
+        }
+
         public double getDistanceToPlayer(int init_playerIndex)
         {
             return playersDistances[init_playerIndex];

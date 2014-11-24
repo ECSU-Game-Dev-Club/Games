@@ -13,7 +13,7 @@ namespace SpaceGame
 {
     class Bullet_prototype
     {
-        const int BULLET_VELOCITY_INCREMENT = 10;
+        const int BULLET_VELOCITY_INCREMENT = 13;
         float bulletVelocityXIncrement;
         float bulletVelocityYIncrement;
 
