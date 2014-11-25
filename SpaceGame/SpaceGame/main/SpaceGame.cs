@@ -70,9 +70,10 @@ namespace SpaceGame
         //Sets up camera class
         Camera camera;
 
-        //Bullets
+        //GATTLING
         List<Bullet_prototype> gattlingBullets = new List<Bullet_prototype>();
         Texture2D gattlingBulletTexture;
+        const int GATTLING_DAMAGE = 1;
 
         //1x1 white texture
         Texture2D whiteTexture;
@@ -403,7 +404,13 @@ namespace SpaceGame
                                 //If hit
                                 if (gattlingBullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
                                 {
-                                    enemyList.RemoveAt(e);
+                                    enemyList[e].hurtEnemy(GATTLING_DAMAGE);
+                                    
+                                    //Check health, if below 0 remove enemy
+                                    if(enemyList[e].getEnemyHealth() < 0)
+                                    {
+                                        enemyList.RemoveAt(e);
+                                    }
                                     gattlingBullets.RemoveAt(i);
                                 }
                             }
@@ -420,7 +427,13 @@ namespace SpaceGame
                                 //If hit
                                 if (gattlingBullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()) && !enemySwarmAttachList[e].getAttached())
                                 {
-                                    enemySwarmAttachList.RemoveAt(e);
+                                    enemySwarmAttachList[e].hurtEnemy(GATTLING_DAMAGE);
+
+                                    if(enemySwarmAttachList[e].getEnemyHealth() < 0)
+                                    {
+                                        enemySwarmAttachList.RemoveAt(e);
+                                    }
+
                                     gattlingBullets.RemoveAt(i);
                                 }
                             }
@@ -576,9 +589,9 @@ namespace SpaceGame
 
             }
 
-                #region"Draw all players"
-                //Draw everything in player1 class
-                player1.Draw(spriteBatch);
+            #region"Draw all players"
+            //Draw everything in player1 class
+            player1.Draw(spriteBatch);
 
             //Draw everything in player2 class
             if (player2.isPlayerReady())

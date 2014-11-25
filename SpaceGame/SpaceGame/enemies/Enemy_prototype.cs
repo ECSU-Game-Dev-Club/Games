@@ -25,6 +25,9 @@ namespace SpaceGame
         //Is enemy idle?
         bool enemyIdle = true;
 
+        const int ENEMY_MAX_HEALTH = 3;
+        int enemyHealth;
+
         //Create a new content manager to load content used just by this level.
         ContentManager content;
 
@@ -91,6 +94,8 @@ namespace SpaceGame
 
             enemyRectangle = new Rectangle(0, 0, WIDTH, HEIGHT);
             enemyPredictedRectangle = new Rectangle(0, 0, 30, 30);
+
+            enemyHealth = ENEMY_MAX_HEALTH;
 
             enemyOrigin.X = WIDTH / 2;
             enemyOrigin.Y = HEIGHT / 2;
@@ -237,6 +242,16 @@ namespace SpaceGame
 
             enemyThrust.Y = enemyThrust.Y * -1;
             enemyThrust.X = enemyThrust.X * -1;
+        }
+
+        public void hurtEnemy(int damage)
+        {
+            enemyHealth -= damage;
+        }
+
+        public int getEnemyHealth()
+        {
+            return enemyHealth;
         }
 
         public Vector2 getEnemyLocationVector()

@@ -121,11 +121,11 @@ namespace SpaceGame
             }
             else if (playerIndex == 2)
             {
-                playerColor = Color.LightBlue;
+                playerColor = Color.Fuchsia;
             }
             else if (playerIndex == 3)
             {
-                playerColor = Color.LightGreen;
+                playerColor = Color.DeepSkyBlue;
             }
             #endregion
 
@@ -442,7 +442,7 @@ namespace SpaceGame
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
 
-            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X, (-1) * gamePad.ThumbSticks.Right.Y);
+            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
 
             #region"D-Pad"
             //Gatling

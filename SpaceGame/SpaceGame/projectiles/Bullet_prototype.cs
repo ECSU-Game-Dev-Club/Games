@@ -22,12 +22,12 @@ namespace SpaceGame
         Vector2 bulletVelocity;
 
         Rectangle bulletHitBox;
-        const int BULLET_HITBOX_WIDTH = 5;
-        const int BULLET_HITBOX_HEIGHT = 10;
+        const int BULLET_HITBOX_WIDTH = 5;//5
+        const int BULLET_HITBOX_HEIGHT = 10;//10
 
         Rectangle bulletRectangle;
-        const int WIDTH = 5;
-        const int HEIGHT = 10;
+        const int WIDTH = 5;//5
+        const int HEIGHT = 10;//10
 
         const int BULLET_LIFETIME = 3;//in seconds
         int gameTimeStamp;

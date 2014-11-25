@@ -21,6 +21,9 @@ namespace SpaceGame
         const int ENEMY_HITBOX_WIDTH = 20;
         const int ENEMY_HITBOX_HEIGHT = 20;
 
+        const int ENEMY_MAX_HEALTH = 3;
+        int enemyHealth;
+
         Random random;
 
         //Is enemy idle?
@@ -81,6 +84,8 @@ namespace SpaceGame
             random = new Random();
 
             temp = new Vector2();
+
+            enemyHealth = ENEMY_MAX_HEALTH;
 
             enemyLocation.X = x;
             enemyLocation.Y = y;
@@ -196,19 +201,39 @@ namespace SpaceGame
                     if (targetVector.X < enemyLocation.X)
                     {
                         enemyThrust.X = -1;
+                        if (enemyAcceleration.X < -1.5)
+                        {
+                            enemyThrust.X -= 2;
+                        }
                     }
                     if (targetVector.X > enemyLocation.X)
                     {
                         enemyThrust.X = 1;
+                        if (enemyAcceleration.X > 1.5)
+                        {
+                            enemyThrust.X += 2;
+                        }
                     }
                     if (targetVector.Y < enemyLocation.Y)
                     {
                         enemyThrust.Y = -1;
+                        if (enemyAcceleration.Y < -1.5)
+                        {
+                            enemyThrust.Y += 2;
+                        }
                     }
                     if (targetVector.Y > enemyLocation.Y)
                     {
                         enemyThrust.Y = 1;
+                        if (enemyAcceleration.Y > 1.5)
+                        {
+                            enemyThrust.Y -= 2;
+                        }
                     }
+                    ////////
+                   
+
+
                 }
                 else
                 {
@@ -255,6 +280,16 @@ namespace SpaceGame
 
             enemyThrust.Y = enemyThrust.Y * -1;
             enemyThrust.X = enemyThrust.X * -1;
+        }
+
+        public void hurtEnemy(int damage)
+        {
+            enemyHealth -= damage;
+        }
+
+        public int getEnemyHealth()
+        {
+            return enemyHealth;
         }
 
         public Vector2 getEnemyLocationVector()
