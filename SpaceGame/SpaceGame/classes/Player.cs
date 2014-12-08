@@ -15,8 +15,8 @@ namespace SpaceGame
     {
         Rectangle playerRectangle;
         Rectangle playerPredictedRectangle;
-        int width = 30;
-        int height = 30;
+        int width = 60;
+        int height = 60;
 
         //what player you are (0 = player one)
         int playerIndex;
@@ -31,6 +31,9 @@ namespace SpaceGame
         Texture2D playerTexture;
         Texture2D playerThrustTexture;
         Texture2D playerPredictionTexture;
+
+        Texture2D playerGatlingTurretTexture;
+
         Color playerColor;
 
         //Inverted Y or X?
@@ -46,9 +49,6 @@ namespace SpaceGame
         //Players location
         Vector2 playerLocation;
 
-        //Players vector2 location delta
-        Vector2 playerLocationDelta;
-
         #region"Weapons"
         //Is player shooting
         bool playerShooting = false;
@@ -56,9 +56,9 @@ namespace SpaceGame
         //GameTime Stamp
         int gameTimeStampMillisecond;
         int gameTimeStampSecond;
-        const int GATTLING_FREQUENCY = 75;//in milliseconds
+        const int GATLING_FREQUENCY = 75;//in milliseconds
 
-        //Current weapon(1=gattling 2=??? 3=??? 4=???)
+        //Current weapon(1=gatling 2=??? 3=??? 4=???)
         int currentWeapon = 1;
         #endregion
 
@@ -92,6 +92,9 @@ namespace SpaceGame
         Vector2[] playerPredictedAcceleration = new Vector2[MAX_PREDICTED_FRAMES];
 
         //Previous
+        //Players vector2 location delta
+        Vector2 playerLocationDelta;
+
         const int MAX_PREVIOUS_FRAMES = 500;
         int currentFrame = 0;
         Vector2[] playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
@@ -100,7 +103,7 @@ namespace SpaceGame
         //Constructor for player, starts/initializes everything, sets spawn location
         public Player(float x, float y, IServiceProvider serviceProvider, int init_playerIndex)
         {
-            playerIndex = init_playerIndex;
+            playerIndex = init_playerIndex; //0 = first player, 1 = seconds player, etc...
 
             content = new ContentManager(serviceProvider, "Content");
 
@@ -153,9 +156,16 @@ namespace SpaceGame
         /// </summary>
         private void LoadContent()
         {
-            playerTexture = content.Load<Texture2D>("Player/game_ship");
+            if (playerIndex == 0)
+            {
+                playerTexture = content.Load<Texture2D>("Player/player_ship");
+            }
+            else
+            {
+                playerTexture = content.Load<Texture2D>("Player/coop_ship_test");
+            }
 
-            playerThrustTexture = content.Load<Texture2D>("Player/game_ship_thrust");
+            playerGatlingTurretTexture = content.Load<Texture2D>("Player/gatling_turret");
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
@@ -191,6 +201,8 @@ namespace SpaceGame
             Console.WriteLine("Player Location: " + playerLocation);
             //Console.WriteLine("Player Acceleration: " + playerAcceleration);
 
+            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
+
             calculatePreviousLocation();
 
             if (currentFrame == MAX_PREVIOUS_FRAMES)
@@ -224,6 +236,8 @@ namespace SpaceGame
 
             //Updates player rectangle
             playerRectangle = new Rectangle(0, 0, width, height);
+
+            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
         }
         /// <summary>
         /// Overload of update method for players that
@@ -269,7 +283,14 @@ namespace SpaceGame
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
 
-            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
+            {
+                playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            }
+            else
+            {
+                playerAimRotation = playerRotation + (float)Math.PI;
+            }
 
             #region"D-Pad"
             //Gatling
@@ -297,7 +318,7 @@ namespace SpaceGame
             #region"Weapons"
             if (gamePad.Triggers.Left > 0.2 || gamePad.Triggers.Right > 0.2)
             {
-                //GATTLING
+                //GATLING
                 if (currentWeapon == 1)
                 {
                     //If gameTimeStampMillisecond and gameTimeStampSecond are less than actual gameTime (FREQUENCY in which you can shoot the gattling)
@@ -306,7 +327,7 @@ namespace SpaceGame
                         playerShooting = true;
 
                         //Since milliseconds reverts to 0 after 1000, modulate it
-                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
 
                         //Update seconds
                         gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
@@ -336,9 +357,9 @@ namespace SpaceGame
                         }
                         //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
                         //So we catch it here
-                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000)
+                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000)
                         {
-                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
                         }
                     }
                 }
@@ -442,7 +463,14 @@ namespace SpaceGame
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
 
-            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
+            {
+                playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            }
+            else
+            {
+                playerAimRotation = playerRotation + (float)Math.PI;
+            }
 
             #region"D-Pad"
             //Gatling
@@ -479,7 +507,7 @@ namespace SpaceGame
                         playerShooting = true;
 
                         //Since milliseconds reverts to 0 after 1000, modulate it
-                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
 
                         //Update seconds
                         gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
@@ -509,9 +537,9 @@ namespace SpaceGame
                         }
                         //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
                         //So we catch it here
-                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000)
+                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000)
                         {
-                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
                         }
                     }
                 }
@@ -552,11 +580,6 @@ namespace SpaceGame
             if (invertedX)
             {
                 playerThrust.X = playerThrust.X * -1;
-            }
-
-            if (playerThrust.X != 0 || playerThrust.Y != 0)
-            {
-                playerRotation = (float)Math.Atan2(playerThrust.X, (-1) * playerThrust.Y);
             }
         }
 
@@ -728,9 +751,24 @@ namespace SpaceGame
                 spriteBatch.Draw(playerPredictionTexture, playerPredictedLocation[i], playerPredictedRectangle, Color.Green * 1f);
             }
 
-            spriteBatch.Draw(playerTexture, playerLocation, playerRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+            spriteBatch.Draw(playerTexture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
 
-            spriteBatch.Draw(playerThrustTexture, playerLocation, playerRectangle, Color.White * (Math.Abs(playerThrust.X) + Math.Abs(playerThrust.Y)), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+            if (currentWeapon == 1) //Gatling Cannon
+            {
+                spriteBatch.Draw(playerGatlingTurretTexture, playerLocation, null, playerColor, playerAimRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+            }
+            if (currentWeapon == 2) //???
+            {
+            }
+            if (currentWeapon == 3) //???
+            {
+            }
+            if (currentWeapon == 4) //???
+            {
+            }
+
+            //THIS IS THE THRUST LAYER
+            //spriteBatch.Draw(playerThrustTexture, playerLocation, null, Color.White * (Math.Abs(playerThrust.X) + Math.Abs(playerThrust.Y)), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
         }
     }
 }

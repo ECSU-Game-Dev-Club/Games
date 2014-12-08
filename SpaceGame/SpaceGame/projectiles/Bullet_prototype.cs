@@ -22,12 +22,12 @@ namespace SpaceGame
         Vector2 bulletVelocity;
 
         Rectangle bulletHitBox;
-        const int BULLET_HITBOX_WIDTH = 5;//5
-        const int BULLET_HITBOX_HEIGHT = 10;//10
+        const int BULLET_HITBOX_WIDTH = 3;//3
+        const int BULLET_HITBOX_HEIGHT = 16;//16
 
         Rectangle bulletRectangle;
-        const int WIDTH = 5;//5
-        const int HEIGHT = 10;//10
+        const int WIDTH = 3;//3
+        const int HEIGHT = 16;//16
 
         const int BULLET_LIFETIME = 3;//in seconds
         int gameTimeStamp;
@@ -40,9 +40,9 @@ namespace SpaceGame
 
         Vector2 bulletOrigin;
 
-        public Bullet_prototype(float spawnX, float spawnY, Vector2 startingVelocity, float init_Rotation, bool init_PlayerBullet, GameTime gameTime, Vector2 gamePad_Thumbstick_Left)
+        public Bullet_prototype(float spawnX, float spawnY, Vector2 startingVelocity, float init_Rotation, bool init_PlayerBullet, GameTime gameTime, Vector2 gamePad_Thumbstick_Right)
         {
-            gameTimeStamp = gameTime.TotalGameTime.Seconds + BULLET_LIFETIME;
+            gameTimeStamp = gameTime.TotalGameTime.Seconds;
 
             playerBullet = init_PlayerBullet;
 
@@ -50,8 +50,16 @@ namespace SpaceGame
 
             rotation = init_Rotation;
 
-            bulletVelocityXIncrement = gamePad_Thumbstick_Left.X * BULLET_VELOCITY_INCREMENT;
-            bulletVelocityYIncrement = (gamePad_Thumbstick_Left.Y * BULLET_VELOCITY_INCREMENT) * -1;
+            if (Math.Abs(gamePad_Thumbstick_Right.X) + Math.Abs(gamePad_Thumbstick_Right.Y) > 0.1)
+            {
+                bulletVelocityXIncrement = gamePad_Thumbstick_Right.X * BULLET_VELOCITY_INCREMENT;
+                bulletVelocityYIncrement = (gamePad_Thumbstick_Right.Y * BULLET_VELOCITY_INCREMENT) * -1;
+            }
+            else
+            {
+                bulletVelocityXIncrement = 0;
+                bulletVelocityYIncrement = (1 * BULLET_VELOCITY_INCREMENT) * -1;
+            }
 
             bulletRectangle = new Rectangle(0, 0, WIDTH, HEIGHT);
 
@@ -70,7 +78,7 @@ namespace SpaceGame
 
             bulletHitBox = new Rectangle((int)bulletLocation.X, (int)bulletLocation.Y, BULLET_HITBOX_WIDTH, BULLET_HITBOX_HEIGHT);
 
-            if (gameTime.TotalGameTime.Seconds > gameTimeStamp)
+            if (Math.Abs(gameTime.TotalGameTime.Seconds - gameTimeStamp) > BULLET_LIFETIME)
             {
                 deleteMeBool = true;
             }

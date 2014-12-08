@@ -156,6 +156,9 @@ namespace SpaceGame
                             }
                         }
                     }
+
+                    //Update the targets distance
+                    targetDistance = playersDistances[targetIndex];
                 }
 
                 if (!ENEMIES_MERCILESS)
@@ -195,8 +198,6 @@ namespace SpaceGame
                     targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
                     targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
 
-                    Vector2 targetDistanceFromMe = new Vector2(players[targetIndex].getPlayerLocation().X - enemyLocation.X, players[targetIndex].getPlayerLocation().Y - enemyLocation.Y);
-
                     //Move toward target
                     if (targetVector.X < enemyLocation.X)
                     {
@@ -230,10 +231,6 @@ namespace SpaceGame
                             enemyThrust.Y -= 2;
                         }
                     }
-                    ////////
-                   
-
-
                 }
                 else
                 {
@@ -285,6 +282,11 @@ namespace SpaceGame
         public void hurtEnemy(int damage)
         {
             enemyHealth -= damage;
+        }
+
+        public bool getTargetAquired()
+        {
+            return targetAquired;
         }
 
         public int getEnemyHealth()
@@ -352,7 +354,7 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue, (float)enemyRotation, enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
+            spriteBatch.Draw(enemyTexture, enemyLocation, null, Color.LightBlue, (float)enemyRotation, enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
         }
     }
 }

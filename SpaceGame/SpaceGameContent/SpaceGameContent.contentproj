@@ -51,18 +51,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="player\game_ship.png">
-      <Name>game_ship</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-    <Compile Include="player\game_ship_thrust.png">
-      <Name>game_ship_thrust</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="enemy\Swarmling.png">
       <Name>Swarmling</Name>
       <Importer>TextureImporter</Importer>
@@ -70,8 +58,32 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="projectile_textures\Bullet2.png">
-      <Name>Bullet2</Name>
+    <Compile Include="player\coop_ship_test.png">
+      <Name>coop_ship_test</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+    <Compile Include="player\gatling_turret.png">
+      <Name>gatling_turret</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+    <Compile Include="player\player_ship.png">
+      <Name>player_ship</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="projectile_textures\gatling_projectile.png">
+      <Name>gatling_projectile</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="projectile_textures\missile_projectile.png">
+      <Name>missile_projectile</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

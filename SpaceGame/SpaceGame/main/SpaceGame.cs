@@ -78,6 +78,13 @@ namespace SpaceGame
         //1x1 white texture
         Texture2D whiteTexture;
 
+        //Maximum distance between all targetting enemies
+        double maxEnemyDistanceFromPlayer = 0;
+        //atleast one enemy is targetting the player
+        bool playerTargeted = false;
+        //The index of the furthest enemy
+        int farthestEnemyIndex = 0;
+
         #region"Developer Stuff"
         List<Enemy_prototype> enemyList = new List<Enemy_prototype>();
         List<EnemySwarm> enemySwarmAttachList = new List<EnemySwarm>();
@@ -162,7 +169,7 @@ namespace SpaceGame
 
             whiteTexture = Content.Load<Texture2D>("whiteTexture");
 
-            gattlingBulletTexture = Content.Load<Texture2D>("projectile_textures/Bullet2");
+            gattlingBulletTexture = Content.Load<Texture2D>("projectile_textures/gatling_projectile");
 
             #region"DEV CONTENT"
 
@@ -398,16 +405,16 @@ namespace SpaceGame
                         //If not idle
                         if (!enemyList[e].getIdle())
                         {
-                                
+
                             if (i < gattlingBullets.Count)
                             {
                                 //If hit
                                 if (gattlingBullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
                                 {
                                     enemyList[e].hurtEnemy(GATTLING_DAMAGE);
-                                    
+
                                     //Check health, if below 0 remove enemy
-                                    if(enemyList[e].getEnemyHealth() < 0)
+                                    if (enemyList[e].getEnemyHealth() < 0)
                                     {
                                         enemyList.RemoveAt(e);
                                     }
@@ -429,7 +436,7 @@ namespace SpaceGame
                                 {
                                     enemySwarmAttachList[e].hurtEnemy(GATTLING_DAMAGE);
 
-                                    if(enemySwarmAttachList[e].getEnemyHealth() < 0)
+                                    if (enemySwarmAttachList[e].getEnemyHealth() < 0)
                                     {
                                         enemySwarmAttachList.RemoveAt(e);
                                     }
@@ -456,6 +463,7 @@ namespace SpaceGame
                 devMode = !devMode;
             }
 
+            //For showing the middle of the camera (dev helper)
             cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
 
             //Updates enemy prototypes
@@ -492,6 +500,7 @@ namespace SpaceGame
                 enemySwarmAttachList[i].update(gravityList, playerArray);
             }
 
+            //DEVMODE
             if (devMode)
             {
                 //ZOOM
@@ -513,7 +522,7 @@ namespace SpaceGame
                 //Left Mouse Button
                 if (mouse.LeftButton != ButtonState.Pressed && mouse_OLDSTATE.LeftButton == ButtonState.Pressed)
                 {
-                    gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 25000));
+                    gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 90000));
                     gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
                 }
             }
@@ -582,13 +591,6 @@ namespace SpaceGame
                 enemySwarmAttachList[i].Draw(spriteBatch);
             }
 
-            //Draws bullets
-            for (int i = 0; i < gattlingBullets.Count; i++)
-            {
-                spriteBatch.Draw(gattlingBulletTexture, gattlingBullets[i].getLocationVector(), gattlingBullets[i].getRectangle(), Color.Yellow, gattlingBullets[i].getRotation(), gattlingBullets[i].getBulletOrigin(), 2.0f, SpriteEffects.None, 0);
-
-            }
-
             #region"Draw all players"
             //Draw everything in player1 class
             player1.Draw(spriteBatch);
@@ -611,6 +613,13 @@ namespace SpaceGame
                 player4.Draw(spriteBatch);
             }
             #endregion
+
+            //Draws bullets
+            for (int i = 0; i < gattlingBullets.Count; i++)
+            {
+                spriteBatch.Draw(gattlingBulletTexture, gattlingBullets[i].getLocationVector(), gattlingBullets[i].getRectangle(), Color.Yellow, gattlingBullets[i].getRotation(), gattlingBullets[i].getBulletOrigin(), 2.0f, SpriteEffects.None, 0);
+
+            }
 
             //spriteBatch.Draw(playerTexture, cameraRectangle, Color.White); //DEV            
 
@@ -692,6 +701,11 @@ namespace SpaceGame
                     {
                         spriteBatch.DrawString(font, "Total # of bullets: " + gattlingBullets.Count, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
                     }
+                    if (i == 7)
+                    {
+                        spriteBatch.DrawString(font, "Farthest enemy from player: " + maxEnemyDistanceFromPlayer, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
+                    }
+
                 }
 
                 spriteBatch.End();

@@ -15,7 +15,7 @@ namespace SpaceGame
 
         //zoom
         public static float zoom = 1f;
-        const float ZOOMCONST = 1f;
+        const float ZOOM_DEFAULT = 1f;
 
         //rotation
         float rotation = 0f;
@@ -39,7 +39,7 @@ namespace SpaceGame
         {
             if (zoom < 1.0f)
             {
-                zoom += 0.01f;
+                zoom += 0.005f;
             }
         }
 
@@ -47,13 +47,13 @@ namespace SpaceGame
         {
             if (zoom > 0.5f)
             {
-                zoom -= 0.01f;
+                zoom -= 0.005f;
             }
         }
 
         public void defaultCameraZoom()
         {
-            zoom = ZOOMCONST;
+            zoom = ZOOM_DEFAULT;
         }
 
         public void Update(Vector2 playerVector)
@@ -71,6 +71,23 @@ namespace SpaceGame
         public Vector2 getCameraOrigin()
         {
             return cameraOrigin;
+        }
+
+        public void zoomCameraByDistance(int distance)
+        {
+            if (distance > 600)
+            {
+                zoomDecriment();//Zoom out
+            }
+            if (distance < 400)
+            {
+                zoomIncriment();//Zoom in
+            }
+
+            if (distance == 0)
+            {
+                zoomIncriment();//Zoom in
+            }
         }
     }
 }
