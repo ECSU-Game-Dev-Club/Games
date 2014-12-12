@@ -36,8 +36,8 @@ namespace SpaceGame
         Vector2 enemyOrigin;
 
         //Target Stuff
-        const int TARGET_RADIUS = 400;
-        const int TARGET_ATTACH_RADIUS = 20;
+        const int TARGET_RADIUS = 4000;
+        const int TARGET_ATTACH_RADIUS = 50;
 
         double[] playersDistances = new double[4];
 
@@ -113,10 +113,11 @@ namespace SpaceGame
         {
             enemyTexture = content.Load<Texture2D>("Enemy/Swarmling");
         }
-
+int count = 0;
         //Updates the player every frame
         public void update(List<Gravity> gravityList, Player[] players)
         {
+            
             if (enemyIdle)
             {
                 for (int i = 0; i < players.Count(); i++)
@@ -181,14 +182,17 @@ namespace SpaceGame
                     enemyVelocity.Y = 0;
                     enemyAcceleration.X = 0;
                     enemyAcceleration.X = 0;
+                    count++;
                 }
 
-                if (targetAttached)
+                if (targetAttached && count == 10)
                 {
                     enemyLocation.X = random.Next((int)players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2)) - (WIDTH / 2);
                     enemyLocation.Y = random.Next((int)players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Width / 2)) - (HEIGHT / 2);
-
+                   
+                    count = 0;
                 }
+ targetAttached = false;
                 #endregion
 
                 #region"Move toward player"
@@ -202,40 +206,48 @@ namespace SpaceGame
                     if (targetVector.X < enemyLocation.X)
                     {
                         enemyThrust.X = -1;
-                        if (enemyAcceleration.X < -1.5)
+                        if (enemyAcceleration.X > -4)
                         {
-                            enemyThrust.X -= 2;
+                            enemyThrust.X = -3;
                         }
                     }
                     if (targetVector.X > enemyLocation.X)
                     {
                         enemyThrust.X = 1;
-                        if (enemyAcceleration.X > 1.5)
+                        if (enemyAcceleration.X < 4)
                         {
-                            enemyThrust.X += 2;
+                            enemyThrust.X = 3;
                         }
                     }
                     if (targetVector.Y < enemyLocation.Y)
                     {
                         enemyThrust.Y = -1;
-                        if (enemyAcceleration.Y < -1.5)
+                        if (enemyAcceleration.Y < -4)
                         {
-                            enemyThrust.Y += 2;
+                            enemyThrust.Y = -2;
                         }
                     }
                     if (targetVector.Y > enemyLocation.Y)
                     {
                         enemyThrust.Y = 1;
-                        if (enemyAcceleration.Y > 1.5)
+                        if (enemyAcceleration.Y > 4)
                         {
-                            enemyThrust.Y -= 2;
+                            enemyThrust.Y = -2;
                         }
                     }
                 }
                 else
                 {
-                    targetVector.X = 0;
-                    targetVector.Y = 0;
+                    //targetVector.X = 0;
+                    //targetVector.Y = 0;
+                    if (enemyAcceleration.X > 0)
+                        enemyThrust.X = -1;
+                    if (enemyAcceleration.X < 0)
+                        enemyThrust.X = 1;
+                    if (enemyAcceleration.Y > 0)
+                        enemyThrust.Y = -1;
+                    if (enemyAcceleration.Y < 0)
+                        enemyThrust.Y = 1;
                 }
                 #endregion
 
@@ -256,7 +268,10 @@ namespace SpaceGame
 
                 //Updates enemy location based on velocity
                 enemyLocation += enemyVelocity;
-                enemyRotation = (double)Math.Atan2((double)enemyVelocity.Y, (double)enemyVelocity.X) + (Math.PI / 2);
+                if(targetAttached)
+                    enemyRotation = (double)Math.Atan2((double)enemyLocation.Y - targetVector.X, (double)enemyLocation.X - targetVector.Y) /*+ (Math.PI / 2)*/;
+                else
+                    enemyRotation = (double)Math.Atan2((double)enemyVelocity.Y, (double)enemyVelocity.X) + (Math.PI / 2);
 
                 enemyHitBox = new Rectangle((int)enemyLocation.X, (int)enemyLocation.Y, ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT);
             }
