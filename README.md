@@ -20,3 +20,6 @@ Game Style: Luftrauser
 -NOTES: Killing things grant you RPG stats? Killing things give you intel on POI.
 
 Tutorial and beginning of game thoughts: For the tutorial you start on earth, get out of orbit, and meet up with your fleet(multiple sized ships). You then warp to the enemy space but find your fleet has been taken out.
+
+@GOOD IDEAS:
+Keep turret last position as an optional setting
