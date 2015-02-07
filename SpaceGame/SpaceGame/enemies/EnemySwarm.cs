@@ -13,6 +13,9 @@ namespace SpaceGame
 {
     class EnemySwarm
     {
+        //Create a new content manager to load content used just by this level.
+        ContentManager content;
+
         Rectangle enemyRectangle;
         int WIDTH = 20;
         int HEIGHT = 20;
@@ -21,7 +24,7 @@ namespace SpaceGame
         const int ENEMY_HITBOX_WIDTH = 20;
         const int ENEMY_HITBOX_HEIGHT = 20;
 
-        const int ENEMY_MAX_HEALTH = 3;
+        const int ENEMY_MAX_HEALTH = 1;
         int enemyHealth;
 
         Random random;
@@ -29,15 +32,12 @@ namespace SpaceGame
         //Is enemy idle?
         bool enemyIdle = true;
 
-        //Create a new content manager to load content used just by this level.
-        ContentManager content;
-
         //Player origin(or middle of player)
         Vector2 enemyOrigin;
 
         //Target Stuff
-        const int TARGET_RADIUS = 400;
-        const int TARGET_ATTACH_RADIUS = 20;
+        const int TARGET_RADIUS = 4000;
+        const int TARGET_ATTACH_RADIUS = 50;
 
         double[] playersDistances = new double[4];
 
@@ -49,7 +49,7 @@ namespace SpaceGame
         bool targetAquired = false;
         bool targetAttached = false;
 
-        //Players texture
+        //Enemy texture
         Texture2D enemyTexture;
 
         //Players location
@@ -113,10 +113,11 @@ namespace SpaceGame
         {
             enemyTexture = content.Load<Texture2D>("Enemy/Swarmling");
         }
-
+int count = 0;
         //Updates the player every frame
         public void update(List<Gravity> gravityList, Player[] players)
         {
+            
             if (enemyIdle)
             {
                 for (int i = 0; i < players.Count(); i++)
@@ -156,6 +157,9 @@ namespace SpaceGame
                             }
                         }
                     }
+
+                    //Update the targets distance
+                    targetDistance = playersDistances[targetIndex];
                 }
 
                 if (!ENEMIES_MERCILESS)
@@ -167,7 +171,7 @@ namespace SpaceGame
                 }
                 #endregion
 
-                #region"Attach to player if near"
+                #region"Attach to target if near"
                 //If player is within radius -X-
                 if (playersDistances[targetIndex] < TARGET_ATTACH_RADIUS)
                 {
@@ -178,70 +182,76 @@ namespace SpaceGame
                     enemyVelocity.Y = 0;
                     enemyAcceleration.X = 0;
                     enemyAcceleration.X = 0;
+                    count++;
                 }
 
-                if (targetAttached)
+                if (targetAttached && count == 10)
                 {
                     enemyLocation.X = random.Next((int)players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2)) - (WIDTH / 2);
                     enemyLocation.Y = random.Next((int)players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Width / 2)) - (HEIGHT / 2);
-
+                   
+                    count = 0;
                 }
+ targetAttached = false;
                 #endregion
 
-                #region"Move toward player"
+                #region"Move toward target"
                 //If target acquired update the target vector with the targets position
                 if (targetAquired)
                 {
-                    targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
-                    targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
-
-                    Vector2 targetDistanceFromMe = new Vector2(players[targetIndex].getPlayerLocation().X - enemyLocation.X, players[targetIndex].getPlayerLocation().Y - enemyLocation.Y);
+                    targetVector.X = players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2);
+                    targetVector.Y = players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Height / 2);
 
                     //Move toward target
                     if (targetVector.X < enemyLocation.X)
                     {
                         enemyThrust.X = -1;
-                        if (enemyAcceleration.X < -1.5)
+                        if (enemyAcceleration.X > -4)
                         {
-                            enemyThrust.X -= 2;
+                            enemyThrust.X = -3;
                         }
                     }
                     if (targetVector.X > enemyLocation.X)
                     {
                         enemyThrust.X = 1;
-                        if (enemyAcceleration.X > 1.5)
+                        if (enemyAcceleration.X < 4)
                         {
-                            enemyThrust.X += 2;
+                            enemyThrust.X = 3;
                         }
                     }
                     if (targetVector.Y < enemyLocation.Y)
                     {
                         enemyThrust.Y = -1;
-                        if (enemyAcceleration.Y < -1.5)
+                        if (enemyAcceleration.Y < -4)
                         {
-                            enemyThrust.Y += 2;
+                            enemyThrust.Y = -3;
                         }
                     }
                     if (targetVector.Y > enemyLocation.Y)
                     {
                         enemyThrust.Y = 1;
-                        if (enemyAcceleration.Y > 1.5)
+                        if (enemyAcceleration.Y > 4)
                         {
-                            enemyThrust.Y -= 2;
+                            enemyThrust.Y = -3;
                         }
                     }
-                    ////////
-                   
-
-
                 }
                 else
                 {
-                    targetVector.X = 0;
-                    targetVector.Y = 0;
+                    //targetVector.X = 0;
+                    //targetVector.Y = 0;
+                    if (enemyAcceleration.X > 0)
+                        enemyThrust.X = -1;
+                    if (enemyAcceleration.X < 0)
+                        enemyThrust.X = 1;
+                    if (enemyAcceleration.Y > 0)
+                        enemyThrust.Y = -1;
+                    if (enemyAcceleration.Y < 0)
+                        enemyThrust.Y = 1;
                 }
                 #endregion
 
+                /*
                 if (players[targetIndex].getPlayerBoost() && targetAttached)
                 {
                     targetAquired = false;
@@ -251,6 +261,7 @@ namespace SpaceGame
 
                     enemyVelocity.Y = -1 * players[targetIndex].getPlayerVelocityVector().Y;
                 }
+                */
 
                 if (!targetAttached)
                 {
@@ -259,7 +270,10 @@ namespace SpaceGame
 
                 //Updates enemy location based on velocity
                 enemyLocation += enemyVelocity;
-                enemyRotation = (double)Math.Atan2((double)enemyVelocity.Y, (double)enemyVelocity.X) + (Math.PI / 2);
+                if(targetAttached)
+                    enemyRotation = (double)Math.Atan2((double)enemyLocation.Y - targetVector.X, (double)enemyLocation.X - targetVector.Y) /*+ (Math.PI / 2)*/;
+                else
+                    enemyRotation = (double)Math.Atan2((double)enemyVelocity.Y, (double)enemyVelocity.X) + (Math.PI / 2);
 
                 enemyHitBox = new Rectangle((int)enemyLocation.X, (int)enemyLocation.Y, ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT);
             }
@@ -267,7 +281,7 @@ namespace SpaceGame
 
         public void calculateDistancesFromPlayers(Player[] players, int i)
         {
-            playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
+            playersDistances[i] = Vector2.Distance(players[i].getPlayerLocation(), enemyLocation);
         }
 
         /// <summary>
@@ -285,6 +299,11 @@ namespace SpaceGame
         public void hurtEnemy(int damage)
         {
             enemyHealth -= damage;
+        }
+
+        public bool getTargetAquired()
+        {
+            return targetAquired;
         }
 
         public int getEnemyHealth()
@@ -352,7 +371,7 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(enemyTexture, enemyLocation, enemyRectangle, Color.LightBlue, (float)enemyRotation, enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
+            spriteBatch.Draw(enemyTexture, enemyLocation, null, Color.LightBlue, (float)enemyRotation, enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
         }
     }
 }

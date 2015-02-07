@@ -36,6 +36,7 @@ namespace SpaceGame
 
         //Target Stuff
         const int TARGET_RADIUS = 400;
+        const int MAX_TARGET_DISTANCE = 1600;
 
         double[] playersDistances = new double[4];
 
@@ -76,7 +77,7 @@ namespace SpaceGame
         const float ENEMY_BOOST_VELOCITY = 5;
 
         //DEVELOPER FUN COMMANDS
-        const bool ENEMIES_MERCILESS = true;
+        const bool ENEMIES_MERCILESS = false;
 
         //Constructor for player, starts/initializes everything
         public Enemy_prototype(float x, float y, IServiceProvider serviceProvider)
@@ -174,11 +175,13 @@ namespace SpaceGame
                             }
                         }
                     }
+                    //Update the targets distance
+                    targetDistance = playersDistances[targetIndex];
                 }
 
                 if (!ENEMIES_MERCILESS)
                 {
-                    if (targetDistance > TARGET_RADIUS)
+                    if (targetDistance > MAX_TARGET_DISTANCE)
                     {
                         targetAquired = false;
                     }
@@ -213,7 +216,13 @@ namespace SpaceGame
                 //NO TARGET
                 else
                 {
-                    //This is where he needs to orbit a gWell or slow down to a stop
+                    //This is where I needs to orbit a gWell or slow down to a stop
+                    enemyVelocity.X = 0;
+                    enemyVelocity.Y = 0;
+
+                    enemyThrust.X = 0;
+                    enemyThrust.Y = 0;
+
                     targetVector.X = 0;
                     targetVector.Y = 0;
                 }
@@ -247,6 +256,11 @@ namespace SpaceGame
         public void hurtEnemy(int damage)
         {
             enemyHealth -= damage;
+        }
+
+        public bool getTargetAquired()
+        {
+            return targetAquired;
         }
 
         public int getEnemyHealth()

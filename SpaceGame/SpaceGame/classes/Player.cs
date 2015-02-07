@@ -13,10 +13,13 @@ namespace SpaceGame
 {
     class Player
     {
+        //Preferences
+        bool staticTurrent = true;
+
         Rectangle playerRectangle;
         Rectangle playerPredictedRectangle;
-        int width = 30;
-        int height = 30;
+        int width = 60;
+        int height = 60;
 
         //what player you are (0 = player one)
         int playerIndex;
@@ -31,6 +34,9 @@ namespace SpaceGame
         Texture2D playerTexture;
         Texture2D playerThrustTexture;
         Texture2D playerPredictionTexture;
+
+        Texture2D playerGatlingTurretTexture;
+
         Color playerColor;
 
         //Inverted Y or X?
@@ -46,9 +52,6 @@ namespace SpaceGame
         //Players location
         Vector2 playerLocation;
 
-        //Players vector2 location delta
-        Vector2 playerLocationDelta;
-
         #region"Weapons"
         //Is player shooting
         bool playerShooting = false;
@@ -56,10 +59,14 @@ namespace SpaceGame
         //GameTime Stamp
         int gameTimeStampMillisecond;
         int gameTimeStampSecond;
-        const int GATTLING_FREQUENCY = 75;//in milliseconds
+        const int GATLING_FREQUENCY = 75;//in milliseconds
 
-        //Current weapon(1=gattling 2=??? 3=??? 4=???)
+        //Current weapon(1=gatling 2=??? 3=??? 4=???)
         int currentWeapon = 1;
+
+        //Missile targeting laser
+        const int MAX_LASER_DISTANCE = 600;
+        Rectangle playerTargetingLaserRectangle;
         #endregion
 
         #region"Movement Variables"
@@ -70,6 +77,7 @@ namespace SpaceGame
         //Player Rotation redians
         float playerRotation;
         float playerAimRotation;
+        float previousPlayerAimRotation;
 
         //thrust is the triggers on the gamepad
         Vector2 playerThrust;
@@ -85,13 +93,20 @@ namespace SpaceGame
 
         #region"Prediction/Previous Variables"
 
+        //Toggle prediction drawing/updating
+        bool calcLocationPrediction = false;
+
         //Prediction
+        Vector2 pTemp = new Vector2();
         const int MAX_PREDICTED_FRAMES = 1000;
         Vector2[] playerPredictedLocation = new Vector2[MAX_PREDICTED_FRAMES];
         Vector2[] playerPredictedVelocity = new Vector2[MAX_PREDICTED_FRAMES];
         Vector2[] playerPredictedAcceleration = new Vector2[MAX_PREDICTED_FRAMES];
 
         //Previous
+        //Players vector2 location delta
+        Vector2 playerLocationDelta;
+
         const int MAX_PREVIOUS_FRAMES = 500;
         int currentFrame = 0;
         Vector2[] playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
@@ -100,9 +115,11 @@ namespace SpaceGame
         //Constructor for player, starts/initializes everything, sets spawn location
         public Player(float x, float y, IServiceProvider serviceProvider, int init_playerIndex)
         {
-            playerIndex = init_playerIndex;
+            playerIndex = init_playerIndex; //0 = first player, 1 = seconds player, etc...
 
             content = new ContentManager(serviceProvider, "Content");
+
+            playerTargetingLaserRectangle = new Rectangle((int)playerLocation.X, (int)playerLocation.Y, MAX_LASER_DISTANCE, 10);
 
             playerLocation.X = x;
             playerLocation.Y = y;
@@ -153,9 +170,16 @@ namespace SpaceGame
         /// </summary>
         private void LoadContent()
         {
-            playerTexture = content.Load<Texture2D>("Player/game_ship");
+            if (playerIndex == 0)
+            {
+                playerTexture = content.Load<Texture2D>("Player/player_ship_mk2");
+            }
+            else
+            {
+                playerTexture = content.Load<Texture2D>("Player/player_ship_mk2");
+            }
 
-            playerThrustTexture = content.Load<Texture2D>("Player/game_ship_thrust");
+            playerGatlingTurretTexture = content.Load<Texture2D>("Player/gatling_turret");
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
@@ -178,14 +202,17 @@ namespace SpaceGame
             //Player didnt boost
             playerBoosted = false;
 
+            //calculates player rotation based on velocity in the X and Y directions
+            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
+
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
 
-            //Calculate acceleration
-            calcAcceleration(gravityList);
-
             //Updates player location based on velocity
             playerLocation += playerVelocity;
+
+            //Calculate acceleration
+            calcAcceleration(gravityList);            
 
             //Console.WriteLine("Player Velocity: " + playerVelocity);
             Console.WriteLine("Player Location: " + playerLocation);
@@ -208,22 +235,31 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
+            currentFrame++;
+
             //Player is playing
             playerReady = true;
             //Player didnt boost
             playerBoosted = false;
 
+            //Updates player location based on velocity
+            playerLocation += playerVelocity;
+
             //Calculate acceleration
             calcAcceleration(gravityList);
+
+            //calculates player rotation based on velocity in the X and Y directions
+            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
 
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, gameTime);
 
-            //Updates player location based on velocity
-            playerLocation += playerVelocity;
+            calculatePreviousLocation();
 
-            //Updates player rectangle
-            playerRectangle = new Rectangle(0, 0, width, height);
+            if (currentFrame == MAX_PREVIOUS_FRAMES)
+            {
+                currentFrame = 0;
+            }
         }
         /// <summary>
         /// Overload of update method for players that
@@ -232,6 +268,8 @@ namespace SpaceGame
         /// <param name="dynamicSpawn">Provides player.</param>
         public void updateDynamicSpawn(Player player1)
         {
+            playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
+
             playerLocation = player1.getPlayerLocation();
 
             playerVelocity.X = player1.getPlayerVelocityVector().X;
@@ -251,10 +289,19 @@ namespace SpaceGame
         private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, GameTime gameTime)
         {
             #region"GamePad Movement Logic"
+
+            //If the left thumbstick is pressed in
+            //Toggle Prediction
+            if (gamePad.Buttons.LeftStick != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftStick == ButtonState.Pressed)
+            {
+                calcLocationPrediction = !calcLocationPrediction;
+            }
+
             //If the user moves the left thumbstick(in any direction)
+            //Thrust player
             if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
             {
-                //Pass the X and Y value to the thrust method in the Player class
+                //Pass the X and Y value of left thumbstick to the thrust method in the Player class
                 setThrust(gamePad.ThumbSticks.Left);
                 //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
             }
@@ -263,13 +310,33 @@ namespace SpaceGame
                 GamePad.SetVibration(PlayerIndex.One, 0, 0);
             }
 
+            #region"Boost"
             //left shoulder or spacebar was clicked(pressed, then released)
+            //Boost player
             if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
             {
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
+            #endregion
 
-            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            //Set rotation of turret
+            if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
+            {
+                playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            }
+            else
+            {
+                
+                if (staticTurrent)
+                {
+                    playerAimRotation = playerRotation + (float)Math.PI;
+                    previousPlayerAimRotation = playerAimRotation;
+                }
+                else
+                {
+                    //Make the turret have its previous angle relative to the ship
+                }
+            }
 
             #region"D-Pad"
             //Gatling
@@ -297,7 +364,7 @@ namespace SpaceGame
             #region"Weapons"
             if (gamePad.Triggers.Left > 0.2 || gamePad.Triggers.Right > 0.2)
             {
-                //GATTLING
+                //GATLING
                 if (currentWeapon == 1)
                 {
                     //If gameTimeStampMillisecond and gameTimeStampSecond are less than actual gameTime (FREQUENCY in which you can shoot the gattling)
@@ -306,7 +373,7 @@ namespace SpaceGame
                         playerShooting = true;
 
                         //Since milliseconds reverts to 0 after 1000, modulate it
-                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
 
                         //Update seconds
                         gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
@@ -336,9 +403,9 @@ namespace SpaceGame
                         }
                         //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
                         //So we catch it here
-                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000)
+                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000)
                         {
-                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
                         }
                     }
                 }
@@ -364,8 +431,16 @@ namespace SpaceGame
             #endregion
 
             #region"Keyboard Movement Logic"
+
+            //If the Tab button on keyboard is pressed
+            //Toggle Prediction
+            if (keyboard.IsKeyUp(Keys.Tab) && keyboard_OLDSTATE.IsKeyDown(Keys.Tab))
+            {
+                calcLocationPrediction = !calcLocationPrediction;
+            }
+
             //If keyboard key 'Up' is pressed
-            if (keyboard.IsKeyDown(Keys.Up))
+            if (keyboard.IsKeyDown(Keys.Up) || keyboard.IsKeyDown(Keys.W))
             {
                 //The user is pressing UP so the Y value is +1
                 keyboardVector.Y = 1;
@@ -374,7 +449,7 @@ namespace SpaceGame
                 setThrust(keyboardVector);
             }
             //If keyboard key 'Down' is pressed
-            else if (keyboard.IsKeyDown(Keys.Down))
+            else if (keyboard.IsKeyDown(Keys.Down) || keyboard.IsKeyDown(Keys.S))
             {
                 //The user is pressing DOWN so the Y value is -1
                 keyboardVector.Y = -1;
@@ -389,7 +464,7 @@ namespace SpaceGame
                 keyboardVector.Y = 0;
             }
             //If keyboard key 'Left' is pressed
-            if (keyboard.IsKeyDown(Keys.Left))
+            if (keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A))
             {
                 //The user is pressing LEFT so the X value is -1
                 keyboardVector.X = -1;
@@ -398,7 +473,7 @@ namespace SpaceGame
                 setThrust(keyboardVector);
             }
             //If keyboard key 'Right' is pressed
-            else if (keyboard.IsKeyDown(Keys.Right))
+            else if (keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D))
             {
                 //The user is pressing RIGHT so the X value is +1
                 keyboardVector.X = 1;
@@ -429,6 +504,13 @@ namespace SpaceGame
         /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
         private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, GameTime gameTime)
         {
+            //If the left thumbstick is pressed in or Q on keyboard
+            //Toggle Prediction
+            if ((gamePad.Buttons.LeftStick != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftStick == ButtonState.Pressed))
+            {
+                calcLocationPrediction = !calcLocationPrediction;
+            }
+
             //If the user moves the left thumbstick(in any direction)
             if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
             {
@@ -436,13 +518,34 @@ namespace SpaceGame
                 setThrust(gamePad.ThumbSticks.Left);
             }
 
+            #region"Boost"
             //left shoulder or spacebar was clicked(pressed, then released)
             if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
             {
                 boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
             }
+            #endregion
 
-            playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            #region"Turret Rotation"
+            //Set rotation of turret
+            if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
+            {
+                playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
+            }
+            else
+            {
+
+                if (staticTurrent)
+                {
+                    playerAimRotation = playerRotation + (float)Math.PI;
+                    previousPlayerAimRotation = playerAimRotation;
+                }
+                else
+                {
+                    //Make the turret have its previous angle relative to the ship
+                }
+            }
+            #endregion
 
             #region"D-Pad"
             //Gatling
@@ -479,7 +582,7 @@ namespace SpaceGame
                         playerShooting = true;
 
                         //Since milliseconds reverts to 0 after 1000, modulate it
-                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
 
                         //Update seconds
                         gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
@@ -509,9 +612,9 @@ namespace SpaceGame
                         }
                         //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
                         //So we catch it here
-                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000)
+                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000)
                         {
-                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATTLING_FREQUENCY) % 1000;
+                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
                         }
                     }
                 }
@@ -553,11 +656,6 @@ namespace SpaceGame
             {
                 playerThrust.X = playerThrust.X * -1;
             }
-
-            if (playerThrust.X != 0 || playerThrust.Y != 0)
-            {
-                playerRotation = (float)Math.Atan2(playerThrust.X, (-1) * playerThrust.Y);
-            }
         }
 
         public void setIsPlayerReady(bool initPlayerReady)
@@ -592,28 +690,29 @@ namespace SpaceGame
 
         private void calculatePrediction(List<Gravity> gravityList)
         {
+           
             //predictive path
             playerPredictedLocation[0] = playerLocation;
             playerPredictedVelocity[0] = playerVelocity;
             playerPredictedAcceleration[0] = playerAcceleration;
 
-            for (int k = 1; k < MAX_PREDICTED_FRAMES; k++)
+            if (calcLocationPrediction)
             {
-                Vector2 pTemp = new Vector2();
-                //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
-                //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
-                playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
-                for (int i = 0; i < gravityList.Count(); i++)
+                for (int k = 1; k < MAX_PREDICTED_FRAMES; k++)
                 {
-                    pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k].X, playerPredictedLocation[k].Y, PLAYER_MASS);
+                    //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
+                    //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
+                    playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
+                    for (int i = 0; i < gravityList.Count(); i++)
+                    {
+                        pTemp += gravityList[i].calcGVectorAcceleration(playerPredictedLocation[k].X, playerPredictedLocation[k].Y, PLAYER_MASS);
+                    }
+
+                    playerPredictedAcceleration[k] = pTemp;
+                    playerPredictedVelocity[k] = playerPredictedVelocity[k - 1] + playerPredictedAcceleration[k];
+
+                    pTemp = new Vector2();
                 }
-
-                playerPredictedAcceleration[k] = pTemp;
-                playerPredictedVelocity[k] = playerPredictedVelocity[k - 1] + playerPredictedAcceleration[k];
-
-                pTemp = new Vector2();
-
-
             }
         }
 
@@ -625,6 +724,11 @@ namespace SpaceGame
         public bool isPlayerReady()
         {
             return playerReady;
+        }
+
+        public Vector2 getPlayerThrust()
+        {
+            return playerThrust;
         }
 
         public int getCurrentWeapon()
@@ -693,7 +797,6 @@ namespace SpaceGame
             for (int i = 0; i < gravityList.Count(); i++)
             {
                 temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
-                //Console.WriteLine("There are " + gravityList.Count() + "gravity wells. Gravity Vector: " + gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS) + "\tGravity Location: " + gravityList[i].getGravityLocationX() + " " + gravityList[i].getGravityLocationY());
             }
 
             playerAcceleration = (playerThrust * PLAYER_THRUST_SCALE) /*add gravity effect here*/ + temp;
@@ -716,21 +819,37 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            //UNCOMMENT FOR PREVIOUS PLAYER LOCATIONS(trails)
             for (int i = 0; i < MAX_PREVIOUS_FRAMES; i++)
             {
                 spriteBatch.Draw(playerPredictionTexture, playerPreviousLocation[i], playerPredictedRectangle, Color.Purple * 1f);
             }
 
-
-            for (int i = 0; i < MAX_PREDICTED_FRAMES; i++)
+            if (calcLocationPrediction)
             {
-                spriteBatch.Draw(playerPredictionTexture, playerPredictedLocation[i], playerPredictedRectangle, Color.Green * 1f);
+                for (int i = 0; i < MAX_PREDICTED_FRAMES; i++)
+                {
+                    spriteBatch.Draw(playerPredictionTexture, playerPredictedLocation[i], playerPredictedRectangle, Color.Green * 1f);
+                }
             }
 
-            spriteBatch.Draw(playerTexture, playerLocation, playerRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+            spriteBatch.Draw(playerTexture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
 
-            spriteBatch.Draw(playerThrustTexture, playerLocation, playerRectangle, Color.White * (Math.Abs(playerThrust.X) + Math.Abs(playerThrust.Y)), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+            if (currentWeapon == 1) //Gatling Cannon
+            {
+                spriteBatch.Draw(playerGatlingTurretTexture, playerLocation, null, playerColor, playerAimRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+            }
+            if (currentWeapon == 2) //???
+            {
+            }
+            if (currentWeapon == 3) //???
+            {
+            }
+            if (currentWeapon == 4) //???
+            {
+            }
+
+            //THIS IS THE THRUST LAYER
+            //spriteBatch.Draw(playerThrustTexture, playerLocation, null, Color.White * (Math.Abs(playerThrust.X) + Math.Abs(playerThrust.Y)), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
         }
     }
 }
