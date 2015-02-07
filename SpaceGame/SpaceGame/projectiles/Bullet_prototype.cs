@@ -11,7 +11,7 @@ using Microsoft.Xna.Framework.Media;
 
 namespace SpaceGame
 {
-    class Bullet_prototype
+    class Bullet_prototype : Bullet
     {
         const int BULLET_VELOCITY_INCREMENT = 13;
         float bulletVelocityXIncrement;
@@ -71,7 +71,7 @@ namespace SpaceGame
             bulletLocation.Y = spawnY;
         }
 
-        public void update(GameTime gameTime)
+        public override void update(GameTime gameTime)
         {
             bulletLocation.X += bulletVelocity.X + bulletVelocityXIncrement;
             bulletLocation.Y += bulletVelocity.Y + bulletVelocityYIncrement;
@@ -84,32 +84,32 @@ namespace SpaceGame
             }
         }
 
-        public bool deleteMe()
+        public override bool deleteMe()
         {
             return deleteMeBool;
         }
 
-        public float getRotation()
+        public override float getRotation()
         {
             return rotation;
         }
 
-        public Vector2 getLocationVector()
+        public override Vector2 getLocationVector()
         {
             return bulletLocation;
         }
 
-        public Rectangle getRectangle()
+        public override Rectangle getRectangle()
         {
             return bulletRectangle;
         }
 
-        public Rectangle getHitBox()
+        public override Rectangle getHitBox()
         {
             return bulletHitBox;
         }
 
-        public Vector2 getBulletOrigin()
+        public override Vector2 getBulletOrigin()
         {
             return bulletOrigin;
         }

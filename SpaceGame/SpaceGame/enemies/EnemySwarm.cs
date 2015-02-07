@@ -13,6 +13,9 @@ namespace SpaceGame
 {
     class EnemySwarm
     {
+        //Create a new content manager to load content used just by this level.
+        ContentManager content;
+
         Rectangle enemyRectangle;
         int WIDTH = 20;
         int HEIGHT = 20;
@@ -21,16 +24,13 @@ namespace SpaceGame
         const int ENEMY_HITBOX_WIDTH = 20;
         const int ENEMY_HITBOX_HEIGHT = 20;
 
-        const int ENEMY_MAX_HEALTH = 3;
+        const int ENEMY_MAX_HEALTH = 1;
         int enemyHealth;
 
         Random random;
 
         //Is enemy idle?
         bool enemyIdle = true;
-
-        //Create a new content manager to load content used just by this level.
-        ContentManager content;
 
         //Player origin(or middle of player)
         Vector2 enemyOrigin;
@@ -49,7 +49,7 @@ namespace SpaceGame
         bool targetAquired = false;
         bool targetAttached = false;
 
-        //Players texture
+        //Enemy texture
         Texture2D enemyTexture;
 
         //Players location
@@ -171,7 +171,7 @@ int count = 0;
                 }
                 #endregion
 
-                #region"Attach to player if near"
+                #region"Attach to target if near"
                 //If player is within radius -X-
                 if (playersDistances[targetIndex] < TARGET_ATTACH_RADIUS)
                 {
@@ -195,12 +195,12 @@ int count = 0;
  targetAttached = false;
                 #endregion
 
-                #region"Move toward player"
+                #region"Move toward target"
                 //If target acquired update the target vector with the targets position
                 if (targetAquired)
                 {
-                    targetVector.X = players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2);
-                    targetVector.Y = players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Height / 2);
+                    targetVector.X = players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2);
+                    targetVector.Y = players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Height / 2);
 
                     //Move toward target
                     if (targetVector.X < enemyLocation.X)
@@ -224,7 +224,7 @@ int count = 0;
                         enemyThrust.Y = -1;
                         if (enemyAcceleration.Y < -4)
                         {
-                            enemyThrust.Y = -2;
+                            enemyThrust.Y = -3;
                         }
                     }
                     if (targetVector.Y > enemyLocation.Y)
@@ -232,7 +232,7 @@ int count = 0;
                         enemyThrust.Y = 1;
                         if (enemyAcceleration.Y > 4)
                         {
-                            enemyThrust.Y = -2;
+                            enemyThrust.Y = -3;
                         }
                     }
                 }
@@ -251,6 +251,7 @@ int count = 0;
                 }
                 #endregion
 
+                /*
                 if (players[targetIndex].getPlayerBoost() && targetAttached)
                 {
                     targetAquired = false;
@@ -260,6 +261,7 @@ int count = 0;
 
                     enemyVelocity.Y = -1 * players[targetIndex].getPlayerVelocityVector().Y;
                 }
+                */
 
                 if (!targetAttached)
                 {
@@ -279,7 +281,7 @@ int count = 0;
 
         public void calculateDistancesFromPlayers(Player[] players, int i)
         {
-            playersDistances[i] = Math.Sqrt(Math.Pow(players[i].getPlayerLocation().X - enemyLocation.X, 2) + Math.Pow(players[i].getPlayerLocation().Y - enemyLocation.Y, 2));
+            playersDistances[i] = Vector2.Distance(players[i].getPlayerLocation(), enemyLocation);
         }
 
         /// <summary>

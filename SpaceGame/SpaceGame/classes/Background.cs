@@ -39,14 +39,18 @@ namespace SpaceGame
 
         const int SCREEN_MULTIPLIER = 2;
 
-        const int BACKGROUND_SPEED_PARALAX = 20;
+        const int BACKGROUND_SPEED_PARALAX = 30;
+        const int MIDDLEGROUND_SPEED_PARALAX = 15;
 
         const int MAX_BACKGROUND_STARS = 300;
-        const int MAX_FOREGROUND_STARS = 60;
+        const int MAX_FOREGROUND_STARS = 30;
+        const int MAX_MIDDLEGROUND_STARS = 20;
         //1-D array of Vector2s for foreground
         Vector2[] starArrayForeground = new Vector2[MAX_FOREGROUND_STARS];
         //1-D array of Vector2s for background
         Vector2[] starArrayBackground = new Vector2[MAX_BACKGROUND_STARS];
+        //1-D array of Vector2s for middleground
+        Vector2[] starArrayMiddleground = new Vector2[MAX_MIDDLEGROUND_STARS];
 
         public Background(IServiceProvider serviceProvider, Rectangle initScreenSizeRectangle)
         {
@@ -91,10 +95,18 @@ namespace SpaceGame
                 starArrayForeground[i].X = random.Next((int)Camera.cameraOrigin.X - screenSizeRectangle.Width * SCREEN_MULTIPLIER, (int)((screenSizeRectangle.Width * SCREEN_MULTIPLIER) + Camera.cameraOrigin.X) + 1);
                 starArrayForeground[i].Y = random.Next((int)Camera.cameraOrigin.Y - screenSizeRectangle.Height * SCREEN_MULTIPLIER, (int)((screenSizeRectangle.Height * SCREEN_MULTIPLIER) + Camera.cameraOrigin.Y) + 1);
             }
+
+            //MIDDLEGROUND
+            for (int i = 0; i < MAX_MIDDLEGROUND_STARS; i++)
+            {
+                starArrayMiddleground[i].X = random.Next(-STAR_BUFFER_ZONE, (screenSizeRectangle.Width + STAR_BUFFER_ZONE) + 1);
+                starArrayMiddleground[i].Y = random.Next(-STAR_BUFFER_ZONE, (screenSizeRectangle.Height + STAR_BUFFER_ZONE) + 1);
+            }
         }
 
         public void Update(Vector2 playerLocationDeltaVector)
         {
+            //BUILDS STARS ONCE
             if (buildStarsBool)
             {
                 this.buildStars();
@@ -128,16 +140,44 @@ namespace SpaceGame
                 }
             }
 
+            //MIDDLEGROUND
+            for (int i = 0; i < MAX_MIDDLEGROUND_STARS; i++)
+            {
+                starArrayMiddleground[i].X -= playerLocationDeltaVector.X / MIDDLEGROUND_SPEED_PARALAX;
+                starArrayMiddleground[i].Y -= playerLocationDeltaVector.Y / MIDDLEGROUND_SPEED_PARALAX;
+
+                //X (Greater than)
+                if (starArrayMiddleground[i].X > (screenSizeRectangle.Width + STAR_BUFFER_ZONE))
+                {
+                    starArrayMiddleground[i].X = -STAR_BUFFER_ZONE;
+                }
+                //X (Less than)
+                if (starArrayMiddleground[i].X < -STAR_BUFFER_ZONE)
+                {
+                    starArrayMiddleground[i].X = screenSizeRectangle.Width + STAR_BUFFER_ZONE;
+                }
+                //Y (Greater than)
+                if (starArrayMiddleground[i].Y > (screenSizeRectangle.Height + STAR_BUFFER_ZONE))
+                {
+                    starArrayMiddleground[i].Y = -STAR_BUFFER_ZONE;
+                }
+                //Y (Less than)
+                if (starArrayMiddleground[i].Y < -STAR_BUFFER_ZONE)
+                {
+                    starArrayMiddleground[i].Y = screenSizeRectangle.Height + STAR_BUFFER_ZONE;
+                }
+            }
+
             //FOREGROUND
             for (int i = 0; i < MAX_FOREGROUND_STARS; i++)
             {
                 //X (Greater than)
-                if (starArrayForeground[i].X > (screenSizeRectangle.Width * SCREEN_MULTIPLIER) + Camera.cameraOrigin.X)
+                if (starArrayForeground[i].X > Camera.cameraOrigin.X + (screenSizeRectangle.Width * SCREEN_MULTIPLIER))
                 {
-                    starArrayForeground[i].X = Camera.cameraOrigin.X - (screenSizeRectangle.Width);
+                    starArrayForeground[i].X = Camera.cameraOrigin.X - (screenSizeRectangle.Width * SCREEN_MULTIPLIER);
                 }
                 //Y (Greater than)
-                if (starArrayForeground[i].Y > (screenSizeRectangle.Height * SCREEN_MULTIPLIER) + Camera.cameraOrigin.Y)
+                if (starArrayForeground[i].Y > Camera.cameraOrigin.Y + (screenSizeRectangle.Height * SCREEN_MULTIPLIER))
                 {
                     starArrayForeground[i].Y = Camera.cameraOrigin.Y - (screenSizeRectangle.Width);
                 }
@@ -154,13 +194,23 @@ namespace SpaceGame
             }
         }
 
-        public void DrawBackgroundStars(SpriteBatch spriteBatch)
+        public void DrawBackground_AND_MiddleGound(SpriteBatch spriteBatch)
         {
             //BACKGROUND
             for (int i = 0; i < MAX_BACKGROUND_STARS; i++)
             {
                 spriteBatch.Draw(starTexture, starArrayBackground[i], starRectangleBackground, Color.White);
             }
+            //MIDDLEGROUND
+            for (int i = 0; i < MAX_MIDDLEGROUND_STARS; i++)
+            {
+                spriteBatch.Draw(starTexture, starArrayMiddleground[i], starRectangleBackground, Color.White);
+            }
+        }
+
+        public void RebuildStars()
+        {
+            buildStarsBool = true;
         }
 
         public void DrawForegroundStars(SpriteBatch spriteBatch)
