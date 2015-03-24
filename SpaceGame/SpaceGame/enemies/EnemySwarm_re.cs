@@ -43,20 +43,7 @@ namespace SpaceGame
         Vector2 enemyLocation;
 
         const float ENEMY_MAX_TURNSPEED = 0.03f;
-        const float ENEMY_MAX_SPEED = 40.0f;
-
-        // X is min ----- Y is Max
-        Vector2 ENEMY_MAX_CONE = new Vector2((float)-(Math.PI / 4), (float)Math.PI / 4);
-
-        //Enemy velocity and acceleration for calculating speed
-        float enemySpeed;
-        Vector2 enemyVelocity;
-        Vector2 enemyAcceleration;
-        //Enemy Rotation redians
-        float enemyRotation;
-
-        //thrust is the location of thumbstick left
-        Vector2 enemyThrust;
+        Vector2 ENEMY_MAX_SPEED = new Vector2(40);
 
         //Enemy mass
         const double ENEMY_MASS = 1;
@@ -68,6 +55,19 @@ namespace SpaceGame
 
         //Does the enemy continue to attack the target even when the enemy is out of range
         const bool ENEMIES_MERCILESS = true;
+
+        // X is min ----- Y is Max 45deg
+        Vector2 ENEMY_MAX_CONE = new Vector2((float)-(Math.PI / 10), (float)Math.PI / 10);
+
+        //Enemy velocity and acceleration for calculating speed
+        float enemySpeed;
+        Vector2 enemyVelocity;
+        Vector2 enemyAcceleration;
+        //Enemy Rotation redians
+        float enemyRotation;
+
+        //thrust is the location of thumbstick left
+        Vector2 enemyThrust;
 
         //Will the enemy delete itself if the player is too far away
         const bool DELETE_ME_IF_FARAWAY = true;
@@ -309,9 +309,10 @@ namespace SpaceGame
                     calcAcceleration(gravityList);
                 }
 
-                //Vector2 heading = new Vector2((float)Math.Cos(enemyRotation), (float)Math.Sin(enemyRotation));
-                //enemyLocation += heading * (enemySpeed);
+                //Clamp velocity right before we add it to location.
+                enemyVelocity = Vector2.Clamp(enemyVelocity, -ENEMY_MAX_SPEED, ENEMY_MAX_SPEED);
 
+                //Add Velocity to Location
                 enemyLocation += enemyVelocity;
 
                 //Updates hitbox to the enemies location

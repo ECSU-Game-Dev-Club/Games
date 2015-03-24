@@ -71,9 +71,8 @@ namespace SpaceGame
         Camera camera;
 
         //GATTLING
-        List<Bullet> worldBullets = new List<Bullet>();
+        List<Projectile> worldBullets = new List<Projectile>();
         Texture2D gattlingBulletTexture;
-        const int GATTLING_DAMAGE = 1;
 
         //1x1 white texture
         Texture2D whiteTexture;
@@ -262,144 +261,22 @@ namespace SpaceGame
                 graphics.ToggleFullScreen();
             }
 
-            #region"Updates all players"
-
-            #region"Player 1"
-            if (player1.isPlayerShooting())
-            {
-                if (player1.getCurrentWeapon() == 1) //GATTLING GUN
-                {
-                    worldBullets.Add(new Bullet_prototype(player1.getPlayerLocation().X, player1.getPlayerLocation().Y, player1.getPlayerVelocityVector(), player1.getAimRotation(), true, gameTime, gamePad1.ThumbSticks.Right));
-                }
-                if (player1.getCurrentWeapon() == 2) //???
-                {
-
-                }
-                if (player1.getCurrentWeapon() == 3) //???
-                {
-
-                }
-                if (player1.getCurrentWeapon() == 4) //???
-                {
-
-                }
-            }
-            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList, gameTime);
-            #endregion
-
-            #region"Player 2"
-            if (player2.isPlayerReady())
-            {
-                if (player2.isPlayerShooting())
-                {
-                    if (player2.getCurrentWeapon() == 1) //GATTLING GUN
-                    {
-                        worldBullets.Add(new Bullet_prototype(player2.getPlayerLocation().X, player2.getPlayerLocation().Y, player2.getPlayerVelocityVector(), player2.getAimRotation(), true, gameTime, gamePad2.ThumbSticks.Right));
-                    }
-                    if (player2.getCurrentWeapon() == 2) //???
-                    {
-
-                    }
-                    if (player2.getCurrentWeapon() == 3) //???
-                    {
-
-                    }
-                    if (player2.getCurrentWeapon() == 4) //???
-                    {
-
-                    }
-                }
-                //Updates the player2 class and passes all inputs
-                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList, gameTime);
-            }
-            else
-            {
-                player2.updateDynamicSpawn(player1);
-            }
-            #endregion
-
-            #region"Player 3"
-            if (player3.isPlayerReady())
-            {
-                if (player3.isPlayerShooting())
-                {
-                    if (player3.getCurrentWeapon() == 1) //GATTLING GUN
-                    {
-                        worldBullets.Add(new Bullet_prototype(player3.getPlayerLocation().X, player3.getPlayerLocation().Y, player3.getPlayerVelocityVector(), player3.getAimRotation(), true, gameTime, gamePad3.ThumbSticks.Right));
-                    }
-                    if (player3.getCurrentWeapon() == 2) //???
-                    {
-
-                    }
-                    if (player3.getCurrentWeapon() == 3) //???
-                    {
-
-                    }
-                    if (player3.getCurrentWeapon() == 4) //???
-                    {
-
-                    }
-                }
-                //Updates the player3 class and passes all inputs
-                player3.update(gamePad3, gamePad3_OLDSTATE, gravityList, gameTime);
-            }
-            else
-            {
-                player3.updateDynamicSpawn(player1);
-            }
-            #endregion
-
-            #region"Player 4"
-            if (player4.isPlayerReady())
-            {
-                if (player4.isPlayerShooting())
-                {
-                    if (player4.getCurrentWeapon() == 1) //GATTLING GUN
-                    {
-                        worldBullets.Add(new Bullet_prototype(player4.getPlayerLocation().X, player4.getPlayerLocation().Y, player4.getPlayerVelocityVector(), player4.getAimRotation(), true, gameTime, gamePad4.ThumbSticks.Right));
-                    }
-                    if (player4.getCurrentWeapon() == 2) //???
-                    {
-
-                    }
-                    if (player4.getCurrentWeapon() == 3) //???
-                    {
-
-                    }
-                    if (player4.getCurrentWeapon() == 4) //???
-                    {
-
-                    }
-                }
-                //Updates the player4 class and passes all inputs
-                player4.update(gamePad4, gamePad4_OLDSTATE, gravityList, gameTime);
-            }
-            else
-            {
-                player4.updateDynamicSpawn(player1);
-            }
-            #endregion
-
-            playerArray[0] = player1;
-            playerArray[1] = player2;
-            playerArray[2] = player3;
-            playerArray[3] = player4;
-            #endregion
+            //Update All Players
+            updatePlayers(gameTime);
 
             #region"Updates bullets and checks collisions"
             //Updates all bullets
             for (int i = 0; i < worldBullets.Count; i++)
             {
-                //Update the bullets
+                //Update Bullets
                 worldBullets[i].update(gameTime);
 
-                //Deleted bullets past their lifetime
-                if (worldBullets[i].deleteMe())
+                if(worldBullets[i].deleteMe())
                 {
                     worldBullets.RemoveAt(i);
                 }
 
-                //Save processing power check ALL enemy
+                //Save processing power check ALL enemies
                 for (int e = 0; e < (enemyList.Count + enemySwarmAttachList.Count + enemySwarmAttachTESTList.Count); e++)
                 {
                     //Check enemyList
@@ -414,10 +291,10 @@ namespace SpaceGame
                                 //If hit
                                 if (worldBullets[i].getHitBox().Intersects(enemyList[e].getEnemyHitBox()))
                                 {
-                                    enemyList[e].hurtEnemy(GATTLING_DAMAGE);
+                                    enemyList[e].hurtEnemy(worldBullets[i].getDamageOfProjectile());
 
                                     //Check health, if below 0 remove enemy
-                                    if (enemyList[e].getEnemyHealth() < 0)
+                                    if (enemyList[e].getEnemyHealth() <= 0)
                                     {
                                         enemyList.RemoveAt(e);
                                     }
@@ -437,9 +314,9 @@ namespace SpaceGame
                                 //If hit
                                 if (worldBullets[i].getHitBox().Intersects(enemySwarmAttachList[e].getEnemyHitBox()) && !enemySwarmAttachList[e].getAttached())
                                 {
-                                    enemySwarmAttachList[e].hurtEnemy(GATTLING_DAMAGE);
+                                    enemySwarmAttachList[e].hurtEnemy(worldBullets[i].getDamageOfProjectile());
 
-                                    if (enemySwarmAttachList[e].getEnemyHealth() < 0)
+                                    if (enemySwarmAttachList[e].getEnemyHealth() <= 0)
                                     {
                                         enemySwarmAttachList.RemoveAt(e);
                                     }
@@ -461,9 +338,9 @@ namespace SpaceGame
                                 //If hit
                                 if (worldBullets[i].getHitBox().Intersects(enemySwarmAttachTESTList[e].getEnemyHitBox()) && !enemySwarmAttachTESTList[e].getAttached())
                                 {
-                                    enemySwarmAttachTESTList[e].hurtEnemy(GATTLING_DAMAGE);
+                                    enemySwarmAttachTESTList[e].hurtEnemy(worldBullets[i].getDamageOfProjectile());
 
-                                    if (enemySwarmAttachTESTList[e].getEnemyHealth() < 0)
+                                    if (enemySwarmAttachTESTList[e].getEnemyHealth() <= 0)
                                     {
                                         enemySwarmAttachTESTList.RemoveAt(e);
                                     }
@@ -591,6 +468,147 @@ namespace SpaceGame
             base.Update(gameTime);
         }
 
+        public void updatePlayers(GameTime gameTime)
+        {
+            #region"Player 1"
+            //Shooting
+            if (player1.isPlayerShooting())
+            {
+                if (player1.getCurrentWeapon() == 1) // GATLING
+                {
+                    worldBullets.Add(new Bullet(player1.getPlayerLocation().X,
+                        player1.getPlayerLocation().Y, player1.getPlayerVelocityVector(),
+                        player1.getAimRotation(), true, gameTime, gamePad1.ThumbSticks.Right));
+                }
+                if (player1.getCurrentWeapon() == 2) // MISSILE
+                {
+                    //Add missiles here, get targets from player
+                }
+                if (player1.getCurrentWeapon() == 3) // ???
+                {
+
+                }
+                if (player1.getCurrentWeapon() == 4) // ???
+                {
+
+                }
+            }
+
+            //Updates the player1 class and passes all inputs
+            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList, gameTime);
+            #endregion
+
+            #region"Player 2"
+            if (player2.isPlayerReady())
+            {
+                //Shooting
+                if (player2.isPlayerShooting())
+                {
+                    if (player2.getCurrentWeapon() == 1) // GATLING
+                    {
+                        worldBullets.Add(new Bullet(player2.getPlayerLocation().X,
+                            player2.getPlayerLocation().Y, player2.getPlayerVelocityVector(),
+                            player2.getAimRotation(), true, gameTime, gamePad2.ThumbSticks.Right));
+                    }
+                    if (player2.getCurrentWeapon() == 2) // MISSILE
+                    {
+                        //Add missiles here, get targets from player
+                    }
+                    if (player2.getCurrentWeapon() == 3) // ???
+                    {
+
+                    }
+                    if (player2.getCurrentWeapon() == 4) // ???
+                    {
+
+                    }
+                }
+
+                //Updates the player2 class and passes all inputs
+                player2.update(gamePad2, gamePad2_OLDSTATE, gravityList, gameTime);
+            }
+            else
+            {
+                player2.updateDynamicSpawn(player1);
+            }
+            #endregion
+
+            #region"Player 3"
+            if (player3.isPlayerReady())
+            {
+                //Shooting
+                if (player3.isPlayerShooting())
+                {
+                    if (player3.getCurrentWeapon() == 1) // GATLING
+                    {
+                        worldBullets.Add(new Bullet(player3.getPlayerLocation().X,
+                            player3.getPlayerLocation().Y, player3.getPlayerVelocityVector(),
+                            player3.getAimRotation(), true, gameTime, gamePad3.ThumbSticks.Right));
+                    }
+                    if (player3.getCurrentWeapon() == 2) // MISSILE
+                    {
+                        //Add missiles here, get targets from player
+                    }
+                    if (player3.getCurrentWeapon() == 3) // ???
+                    {
+
+                    }
+                    if (player3.getCurrentWeapon() == 4) // ???
+                    {
+
+                    }
+                }
+
+                //Updates the player3 class and passes all inputs
+                player3.update(gamePad3, gamePad3_OLDSTATE, gravityList, gameTime);
+            }
+            else
+            {
+                player3.updateDynamicSpawn(player1);
+            }
+            #endregion
+
+            #region"Player 4"
+            if (player4.isPlayerReady())
+            {
+                //Shooting
+                if (player4.isPlayerShooting())
+                {
+                    if (player4.getCurrentWeapon() == 1) // GATLING
+                    {
+                        worldBullets.Add(new Bullet(player4.getPlayerLocation().X,
+                            player4.getPlayerLocation().Y, player4.getPlayerVelocityVector(),
+                            player4.getAimRotation(), true, gameTime, gamePad4.ThumbSticks.Right));
+                    }
+                    if (player4.getCurrentWeapon() == 2) // MISSILE
+                    {
+                        //Add missiles here, get targets from player
+                    }
+                    if (player4.getCurrentWeapon() == 3) // ???
+                    {
+
+                    }
+                    if (player4.getCurrentWeapon() == 4) // ???
+                    {
+
+                    }
+                }
+
+                //Updates the player4 class and passes all inputs
+                player4.update(gamePad4, gamePad4_OLDSTATE, gravityList, gameTime);
+            }
+            else
+            {
+                player4.updateDynamicSpawn(player1);
+            }
+            #endregion
+
+            playerArray[0] = player1;
+            playerArray[1] = player2;
+            playerArray[2] = player3;
+            playerArray[3] = player4;
+        }
+
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -664,8 +682,10 @@ namespace SpaceGame
             //Draws bullets
             for (int i = 0; i < worldBullets.Count; i++)
             {
-                spriteBatch.Draw(gattlingBulletTexture, worldBullets[i].getLocationVector(), worldBullets[i].getRectangle(), Color.Yellow, worldBullets[i].getRotation(), worldBullets[i].getBulletOrigin(), 2.0f, SpriteEffects.None, 0);
-
+                if (worldBullets[i].getCurrentProjectile() == 1)//Gatling
+                {
+                    spriteBatch.Draw(gattlingBulletTexture, worldBullets[i].getLocationVector(), worldBullets[i].getDrawBox(), Color.Yellow, worldBullets[i].getRotation(), worldBullets[i].getBulletOrigin(), 2.0f, SpriteEffects.None, 0);
+                }
             }
 
             //spriteBatch.Draw(playerTexture, cameraRectangle, Color.White); //DEV            

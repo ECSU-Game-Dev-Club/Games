@@ -53,16 +53,11 @@ namespace SpaceGame
         Vector2 playerLocation;
 
         #region"Weapons"
-        //Is player shooting
-        bool playerShooting = false;
-
-        //GameTime Stamp
-        int gameTimeStampMillisecond;
-        int gameTimeStampSecond;
-        const int GATLING_FREQUENCY = 75;//in milliseconds
-
-        //Current weapon(1=gatling 2=??? 3=??? 4=???)
+        //Current weapon(1=gatling 2=missile 3=??? 4=???)
         int currentWeapon = 1;
+
+        GatlingWeapon gatlingWeapon;
+        MissileWeapon missileWeapon;
 
         //Missile targeting laser
         const int MAX_LASER_DISTANCE = 600;
@@ -74,6 +69,10 @@ namespace SpaceGame
         //Players velocity and acceleration for calculating speed
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
+
+        //Max Velocity
+        Vector2 PLAYER_MAX_VELOCITY = new Vector2(40);
+
         //Player Rotation redians
         float playerRotation;
         float playerAimRotation;
@@ -124,9 +123,6 @@ namespace SpaceGame
             playerLocation.X = x;
             playerLocation.Y = y;
 
-            gameTimeStampMillisecond = 0;
-            gameTimeStampSecond = 0;
-
             #region"Set Player Colors"
             if (playerIndex == 0)
             {
@@ -160,6 +156,10 @@ namespace SpaceGame
 
             playerRotation = 0;
             playerAimRotation = 0;
+
+            //Weapons:
+            gatlingWeapon = new GatlingWeapon();
+            missileWeapon = new MissileWeapon();
 
             this.LoadContent();
         }
@@ -202,23 +202,22 @@ namespace SpaceGame
             //Player didnt boost
             playerBoosted = false;
 
-            //calculates player rotation based on velocity in the X and Y directions
-            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
-
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
 
-            //Updates player location based on velocity
-            playerLocation += playerVelocity;
+            //calculates player rotation based on velocity in the X and Y directions
+            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
+
+            //Clamp players velocity before adding to location
+            playerVelocity = Vector2.Clamp(playerVelocity , -(PLAYER_MAX_VELOCITY), PLAYER_MAX_VELOCITY);
 
             //Calculate acceleration
-            calcAcceleration(gravityList);            
-
-            //Console.WriteLine("Player Velocity: " + playerVelocity);
-            Console.WriteLine("Player Location: " + playerLocation);
-            //Console.WriteLine("Player Acceleration: " + playerAcceleration);
+            calcAcceleration(gravityList);
 
             calculatePreviousLocation();
+
+            //Updates player location based on velocity
+            playerLocation += playerVelocity; //ALWAYS ON BOTTOM
 
             if (currentFrame == MAX_PREVIOUS_FRAMES)
             {
@@ -242,19 +241,22 @@ namespace SpaceGame
             //Player didnt boost
             playerBoosted = false;
 
-            //Updates player location based on velocity
-            playerLocation += playerVelocity;
-
-            //Calculate acceleration
-            calcAcceleration(gravityList);
+            //Figure out if user wants player to move(movement logic)
+            playerControls(gamepad, gamepad_OLDSTATE, gameTime);
 
             //calculates player rotation based on velocity in the X and Y directions
             playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
 
-            //Figure out if user wants player to move(movement logic)
-            playerControls(gamepad, gamepad_OLDSTATE, gameTime);
+            //Clamp players velocity before adding to location
+            playerVelocity = Vector2.Clamp(playerVelocity, -(PLAYER_MAX_VELOCITY), PLAYER_MAX_VELOCITY);
+
+            //Calculate acceleration
+            calcAcceleration(gravityList);
 
             calculatePreviousLocation();
+
+            //Updates player location based on velocity
+            playerLocation += playerVelocity;
 
             if (currentFrame == MAX_PREVIOUS_FRAMES)
             {
@@ -367,47 +369,7 @@ namespace SpaceGame
                 //GATLING
                 if (currentWeapon == 1)
                 {
-                    //If gameTimeStampMillisecond and gameTimeStampSecond are less than actual gameTime (FREQUENCY in which you can shoot the gattling)
-                    if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond && gameTime.TotalGameTime.Seconds >= gameTimeStampSecond)
-                    {
-                        playerShooting = true;
-
-                        //Since milliseconds reverts to 0 after 1000, modulate it
-                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
-
-                        //Update seconds
-                        gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
-
-                        //Yeah...
-                        if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond)
-                        {
-                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds + 1;
-                        }
-                    }
-                    else
-                    {
-                        playerShooting = false;
-
-                        //gameTime.TotalGameTime.Seconds reverts back to 0 after 60 seconds has past.
-                        //So make gameTimeStampSecond relative
-                        if (Math.Abs(gameTimeStampSecond - gameTime.TotalGameTime.Seconds) > 2)
-                        {
-                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
-                        }
-
-                        //For some reason bugs happen and sometimes gameTimeStampSecond is less then actual time.
-                        //So we catch it here
-                        if (gameTimeStampSecond < gameTime.TotalGameTime.Seconds)
-                        {
-                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
-                        }
-                        //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
-                        //So we catch it here
-                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000)
-                        {
-                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
-                        }
-                    }
+                    gatlingWeapon.shoot(gameTime, this, gamePad);
                 }
                 if (currentWeapon == 2)
                 {
@@ -424,7 +386,7 @@ namespace SpaceGame
             }
             else
             {
-                playerShooting = false;
+                gatlingWeapon.setShooting(false);
             }
             #endregion
 
@@ -576,47 +538,7 @@ namespace SpaceGame
                 //GATTLING
                 if (currentWeapon == 1)
                 {
-                    //If gameTimeStampMillisecond and gameTimeStampSecond are less than actual gameTime (FREQUENCY in which you can shoot the gattling)
-                    if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond && gameTime.TotalGameTime.Seconds >= gameTimeStampSecond)
-                    {
-                        playerShooting = true;
-
-                        //Since milliseconds reverts to 0 after 1000, modulate it
-                        gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
-
-                        //Update seconds
-                        gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
-
-                        //Yeah...
-                        if (gameTime.TotalGameTime.Milliseconds >= gameTimeStampMillisecond)
-                        {
-                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds + 1;
-                        }
-                    }
-                    else
-                    {
-                        playerShooting = false;
-
-                        //gameTime.TotalGameTime.Seconds reverts back to 0 after 60 seconds has past.
-                        //So make gameTimeStampSecond relative
-                        if (Math.Abs(gameTimeStampSecond - gameTime.TotalGameTime.Seconds) > 2)
-                        {
-                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
-                        }
-
-                        //For some reason bugs happen and sometimes gameTimeStampSecond is less then actual time.
-                        //So we catch it here
-                        if (gameTimeStampSecond < gameTime.TotalGameTime.Seconds)
-                        {
-                            gameTimeStampSecond = gameTime.TotalGameTime.Seconds;
-                        }
-                        //For some reason bugs happen and gameTimeStampMillisecond somehow has too much time added to it.
-                        //So we catch it here
-                        if (gameTimeStampMillisecond > (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000)
-                        {
-                            gameTimeStampMillisecond = (gameTime.TotalGameTime.Milliseconds + GATLING_FREQUENCY) % 1000;
-                        }
-                    }
+                    gatlingWeapon.shoot(gameTime, this, gamePad);
                 }
                 if (currentWeapon == 2)
                 {
@@ -633,7 +555,7 @@ namespace SpaceGame
             }
             else
             {
-                playerShooting = false;
+                gatlingWeapon.setShooting(false);
             }
             #endregion
         }
@@ -700,8 +622,6 @@ namespace SpaceGame
             {
                 for (int k = 1; k < MAX_PREDICTED_FRAMES; k++)
                 {
-                    //playerPredictedVelocity[k].X = MathHelper.Clamp(playerPredictedVelocity[k].X, (-1) * PLAYERMAX, PLAYERMAX);
-                    //playerPredictedVelocity[k].Y = MathHelper.Clamp(playerPredictedVelocity[k].Y, (-1) * PLAYERMAX, PLAYERMAX);
                     playerPredictedLocation[k] = playerPredictedLocation[k - 1] + playerPredictedVelocity[k];
                     for (int i = 0; i < gravityList.Count(); i++)
                     {
@@ -718,12 +638,38 @@ namespace SpaceGame
 
         public bool isPlayerShooting()
         {
-            return playerShooting;
+            if(currentWeapon == 1)
+            {
+                return gatlingWeapon.getShooting();
+            }
+            /*
+            else if (currentWeapon == 2)
+            {
+                //return missileWeapon.getShooting();
+            }
+            else if (currentWeapon == 3)
+            {
+                //return ???.getShooting();
+            }
+            else if (currentWeapon == 4)
+            {
+                //return ???.getShooting();
+            }
+            */
+            else
+            {
+                return false;
+            }
         }
 
         public bool isPlayerReady()
         {
             return playerReady;
+        }
+
+        public GatlingWeapon getGatlingWeapon()
+        {
+            return gatlingWeapon;
         }
 
         public Vector2 getPlayerThrust()
