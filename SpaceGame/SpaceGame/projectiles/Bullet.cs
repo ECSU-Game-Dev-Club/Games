@@ -22,14 +22,19 @@ namespace SpaceGame
 
         int gameTimeStamp;
 
+        Random rand;
+
+        int bulletSpread = 48;//DEFAULT: 48
+
         public Bullet(float spawnX, float spawnY, Vector2 startingVelocity, 
-            float init_Rotation, bool init_PlayerBullet, GameTime gameTime, 
-            Vector2 gamePad_Thumbstick_Right)
+            float init_Rotation, bool init_PlayerBullet, GameTime gameTime)
         {
             drawBox_Width = 3;
             drawBox_Height = 16;
             hitBox_Width = 3;
             hitBox_Height = 16;
+
+            rand = new Random();
 
             //Current projectile(1=gatling 2=missile 3=??? 4=???)
             currentProjectile = 1;
@@ -45,16 +50,8 @@ namespace SpaceGame
 
             rotation = init_Rotation;
 
-            if (Math.Abs(gamePad_Thumbstick_Right.X) + Math.Abs(gamePad_Thumbstick_Right.Y) > 0.1)
-            {
-                bulletVelocityXIncrement = gamePad_Thumbstick_Right.X * BULLET_VELOCITY_INCREMENT;
-                bulletVelocityYIncrement = (gamePad_Thumbstick_Right.Y * BULLET_VELOCITY_INCREMENT) * -1;
-            }
-            else
-            {
-                bulletVelocityXIncrement = 0;
-                bulletVelocityYIncrement = (1 * BULLET_VELOCITY_INCREMENT) * -1;
-            }
+            bulletVelocityXIncrement = (float)(Math.Cos((rotation + (0.5 * Math.PI) - ((rand.NextDouble() * Math.PI / bulletSpread) * (float)rand.Next(-1, 2)))) * BULLET_VELOCITY_INCREMENT);
+            bulletVelocityYIncrement = (float)(Math.Sin((rotation + (0.5 * Math.PI) - ((rand.NextDouble() * Math.PI / bulletSpread) * (float)rand.Next(-1, 2)))) * BULLET_VELOCITY_INCREMENT);
 
             //Drawbox DOES NOT need to move, thus X=0 Y=0
             drawBox = new Rectangle(0, 0, drawBox_Width, drawBox_Height);

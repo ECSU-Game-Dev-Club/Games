@@ -11,7 +11,7 @@ namespace SpaceGame
         //GameTime Stamp
         int gameTimeStampMillisecond;
         int gameTimeStampSecond;
-        const int GATLING_FREQUENCY = 75; // In Milliseconds
+        const int GATLING_FREQUENCY = 75; //DEFAULT:75 In Milliseconds
 
         public GatlingWeapon()
         {

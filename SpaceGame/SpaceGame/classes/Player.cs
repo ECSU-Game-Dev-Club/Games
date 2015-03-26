@@ -35,8 +35,6 @@ namespace SpaceGame
         Texture2D playerThrustTexture;
         Texture2D playerPredictionTexture;
 
-        Texture2D playerGatlingTurretTexture;
-
         Color playerColor;
 
         //Inverted Y or X?
@@ -56,12 +54,21 @@ namespace SpaceGame
         //Current weapon(1=gatling 2=missile 3=??? 4=???)
         int currentWeapon = 1;
 
+        #region"Gatling"
         GatlingWeapon gatlingWeapon;
+        Texture2D playerGatlingTurretTexture;
+        #endregion
+
+        #region"Missile"
+        const int MAX_LASER_DISTANCE = 600;
+
+        Rectangle playerTargetingLaserRectangle;
+
         MissileWeapon missileWeapon;
 
-        //Missile targeting laser
-        const int MAX_LASER_DISTANCE = 600;
-        Rectangle playerTargetingLaserRectangle;
+        Texture2D playerMissileTurretTexture;
+        #endregion
+
         #endregion
 
         #region"Movement Variables"
@@ -172,14 +179,16 @@ namespace SpaceGame
         {
             if (playerIndex == 0)
             {
-                playerTexture = content.Load<Texture2D>("Player/player_ship_mk2");
+                playerTexture = content.Load<Texture2D>("player/player_ship");
             }
             else
             {
-                playerTexture = content.Load<Texture2D>("Player/player_ship_mk2");
+                playerTexture = content.Load<Texture2D>("player/player_ship_mk2");
             }
 
-            playerGatlingTurretTexture = content.Load<Texture2D>("Player/gatling_turret");
+            playerGatlingTurretTexture = content.Load<Texture2D>("weapons/gatling_turret");
+
+            playerMissileTurretTexture = content.Load<Texture2D>("weapons/missile_turret");
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
         }
@@ -784,8 +793,9 @@ namespace SpaceGame
             {
                 spriteBatch.Draw(playerGatlingTurretTexture, playerLocation, null, playerColor, playerAimRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
             }
-            if (currentWeapon == 2) //???
+            if (currentWeapon == 2) //Missile
             {
+                spriteBatch.Draw(playerMissileTurretTexture, playerLocation, null, playerColor, playerAimRotation + (float)Math.PI, playerOrigin, 1.0f, SpriteEffects.None, 0);
             }
             if (currentWeapon == 3) //???
             {

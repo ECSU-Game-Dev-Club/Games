@@ -63,7 +63,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
-    <Compile Include="player\gatling_turret.png">
+    <Compile Include="weapons\gatling_turret.png">
       <Name>gatling_turret</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
@@ -105,6 +105,13 @@
   <ItemGroup>
     <Compile Include="laser.png">
       <Name>laser</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="weapons\missile_turret.png">
+      <Name>missile_turret</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

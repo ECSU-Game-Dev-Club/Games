@@ -478,7 +478,7 @@ namespace SpaceGame
                 {
                     worldBullets.Add(new Bullet(player1.getPlayerLocation().X,
                         player1.getPlayerLocation().Y, player1.getPlayerVelocityVector(),
-                        player1.getAimRotation(), true, gameTime, gamePad1.ThumbSticks.Right));
+                        player1.getAimRotation(), true, gameTime));
                 }
                 if (player1.getCurrentWeapon() == 2) // MISSILE
                 {
@@ -508,7 +508,7 @@ namespace SpaceGame
                     {
                         worldBullets.Add(new Bullet(player2.getPlayerLocation().X,
                             player2.getPlayerLocation().Y, player2.getPlayerVelocityVector(),
-                            player2.getAimRotation(), true, gameTime, gamePad2.ThumbSticks.Right));
+                            player2.getAimRotation(), true, gameTime));
                     }
                     if (player2.getCurrentWeapon() == 2) // MISSILE
                     {
@@ -543,7 +543,7 @@ namespace SpaceGame
                     {
                         worldBullets.Add(new Bullet(player3.getPlayerLocation().X,
                             player3.getPlayerLocation().Y, player3.getPlayerVelocityVector(),
-                            player3.getAimRotation(), true, gameTime, gamePad3.ThumbSticks.Right));
+                            player3.getAimRotation(), true, gameTime));
                     }
                     if (player3.getCurrentWeapon() == 2) // MISSILE
                     {
@@ -578,7 +578,7 @@ namespace SpaceGame
                     {
                         worldBullets.Add(new Bullet(player4.getPlayerLocation().X,
                             player4.getPlayerLocation().Y, player4.getPlayerVelocityVector(),
-                            player4.getAimRotation(), true, gameTime, gamePad4.ThumbSticks.Right));
+                            player4.getAimRotation(), true, gameTime));
                     }
                     if (player4.getCurrentWeapon() == 2) // MISSILE
                     {
