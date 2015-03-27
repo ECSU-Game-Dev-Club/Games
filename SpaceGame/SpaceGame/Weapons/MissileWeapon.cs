@@ -7,5 +7,16 @@ namespace SpaceGame
 {
     class MissileWeapon
     {
+        bool shooting = false;
+
+        public MissileWeapon()
+        {
+
+        }
+
+        public void shoot()
+        {
+
+        }
     }
 }

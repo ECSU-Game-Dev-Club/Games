@@ -44,8 +44,8 @@ namespace SpaceGame
         //Player Did Not Press Start(Not Player1)
         bool playerReady = false;
 
-        //Keyboard vector(used to help smooth movement on keyboard)
-        Vector2 keyboardVector;
+        //Keyboard float
+        float keyboardVector;
 
         //Players location
         Vector2 playerLocation;
@@ -82,11 +82,15 @@ namespace SpaceGame
 
         //Player Rotation redians
         float playerRotation;
+        float playerRotationDifference;
+        float playerDesiredRotation;
+        const float MAX_PLAYER_ROT_SPEED = 0.1f;
+
         float playerAimRotation;
         float previousPlayerAimRotation;
 
         //thrust is the triggers on the gamepad
-        Vector2 playerThrust;
+        float playerThrust;
         const float PLAYER_THRUST_SCALE = .1f;
 
         //Player Boost Velocity
@@ -149,9 +153,9 @@ namespace SpaceGame
             }
             #endregion
 
-            keyboardVector = new Vector2(0, 0);
+            keyboardVector = 0;
 
-            playerThrust = new Vector2(0, 0);
+            playerThrust = 0;
 
             playerAcceleration = new Vector2(0, 0);
 
@@ -162,6 +166,7 @@ namespace SpaceGame
             playerOrigin.Y = height / 2;
 
             playerRotation = 0;
+            playerDesiredRotation = 0;
             playerAimRotation = 0;
 
             //Weapons:
@@ -194,13 +199,12 @@ namespace SpaceGame
         }
 
         /// <summary>
-        /// Overload of update method for players that
-        /// are not player1
+        /// Player1 update method.
         /// </summary>
         /// <param name="gamepad">Provides gamepad state.</param>
         /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
-        /// /// <param name="keyboard">Provides keyboard state.</param>
-        /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
+        /// <param name="keyboard">Provides keyboard state.</param>
+        /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
@@ -214,8 +218,14 @@ namespace SpaceGame
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
 
-            //calculates player rotation based on velocity in the X and Y directions
-            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
+            if (gamepad.ThumbSticks.Left.X != 0 && gamepad.ThumbSticks.Left.Y != 0)
+            {
+                //calculates player desired rotation based on gamepad.
+                playerDesiredRotation = (float)Math.Atan2(gamepad.ThumbSticks.Left.X, gamepad.ThumbSticks.Left.Y);
+                playerRotationDifference = Helper.WrapAngle(playerDesiredRotation - playerRotation);
+                playerRotationDifference = MathHelper.Clamp(playerRotationDifference, -MAX_PLAYER_ROT_SPEED, MAX_PLAYER_ROT_SPEED);
+                playerRotation = Helper.WrapAngle(playerRotationDifference + playerRotation);
+            }
 
             //Clamp players velocity before adding to location
             playerVelocity = Vector2.Clamp(playerVelocity , -(PLAYER_MAX_VELOCITY), PLAYER_MAX_VELOCITY);
@@ -253,8 +263,14 @@ namespace SpaceGame
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, gameTime);
 
-            //calculates player rotation based on velocity in the X and Y directions
-            playerRotation = (float)Math.Atan2(playerVelocity.X, (-1) * (playerVelocity.Y));
+            if (gamepad.ThumbSticks.Left.X != 0 && gamepad.ThumbSticks.Left.Y != 0)
+            {
+                //calculates player desired rotation based on gamepad.
+                playerDesiredRotation = (float)Math.Atan2(gamepad.ThumbSticks.Left.X, gamepad.ThumbSticks.Left.Y);
+                playerRotationDifference = Helper.WrapAngle(playerDesiredRotation - playerRotation);
+                playerRotationDifference = MathHelper.Clamp(playerRotationDifference, -MAX_PLAYER_ROT_SPEED, MAX_PLAYER_ROT_SPEED);
+                playerRotation = Helper.WrapAngle(playerRotationDifference + playerRotation);
+            }
 
             //Clamp players velocity before adding to location
             playerVelocity = Vector2.Clamp(playerVelocity, -(PLAYER_MAX_VELOCITY), PLAYER_MAX_VELOCITY);
@@ -309,11 +325,11 @@ namespace SpaceGame
             }
 
             //If the user moves the left thumbstick(in any direction)
-            //Thrust player
+            //Rotate Player
             if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
             {
                 //Pass the X and Y value of left thumbstick to the thrust method in the Player class
-                setThrust(gamePad.ThumbSticks.Left);
+                setThrust(gamePad.Triggers.Left);
                 //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
             }
             else
@@ -373,7 +389,7 @@ namespace SpaceGame
             #endregion
 
             #region"Weapons"
-            if (gamePad.Triggers.Left > 0.2 || gamePad.Triggers.Right > 0.2)
+            if (gamePad.Triggers.Right > 0.2)
             {
                 //GATLING
                 if (currentWeapon == 1)
@@ -400,70 +416,6 @@ namespace SpaceGame
             #endregion
 
             #endregion
-
-            #region"Keyboard Movement Logic"
-
-            //If the Tab button on keyboard is pressed
-            //Toggle Prediction
-            if (keyboard.IsKeyUp(Keys.Tab) && keyboard_OLDSTATE.IsKeyDown(Keys.Tab))
-            {
-                calcLocationPrediction = !calcLocationPrediction;
-            }
-
-            //If keyboard key 'Up' is pressed
-            if (keyboard.IsKeyDown(Keys.Up) || keyboard.IsKeyDown(Keys.W))
-            {
-                //The user is pressing UP so the Y value is +1
-                keyboardVector.Y = 1;
-
-                //Passing the keyboards vector to player1.
-                setThrust(keyboardVector);
-            }
-            //If keyboard key 'Down' is pressed
-            else if (keyboard.IsKeyDown(Keys.Down) || keyboard.IsKeyDown(Keys.S))
-            {
-                //The user is pressing DOWN so the Y value is -1
-                keyboardVector.Y = -1;
-
-                //Passing the keyboards vector to player1.
-                setThrust(keyboardVector);
-
-            }
-            //Up for Down not pressed
-            else
-            {
-                keyboardVector.Y = 0;
-            }
-            //If keyboard key 'Left' is pressed
-            if (keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A))
-            {
-                //The user is pressing LEFT so the X value is -1
-                keyboardVector.X = -1;
-
-                //Passing the keyboards vector to player1.
-                setThrust(keyboardVector);
-            }
-            //If keyboard key 'Right' is pressed
-            else if (keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D))
-            {
-                //The user is pressing RIGHT so the X value is +1
-                keyboardVector.X = 1;
-
-                //Passing the keyboards vector to player1.
-                setThrust(keyboardVector);
-            }
-            //Left or Right not pressed
-            else
-            {
-                keyboardVector.X = 0;
-            }
-
-            //Spacebar
-            if ((keyboard.IsKeyUp(Keys.Space) && keyboard_OLDSTATE.IsKeyDown(Keys.Space)))
-            {
-                boostDirection(keyboardVector.X, keyboardVector.Y);
-            }
-            #endregion
         }
         #region"playerControls Overload"
         /// <summary>
@@ -486,7 +438,7 @@ namespace SpaceGame
             if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
             {
                 //Pass the X and Y value to the thrust method in the Player class
-                setThrust(gamePad.ThumbSticks.Left);
+                setThrust(gamePad.Triggers.Left);
             }
 
             #region"Boost"
@@ -542,7 +494,7 @@ namespace SpaceGame
             #endregion
 
             #region"Weapons"
-            if (gamePad.Triggers.Left > 0.2 || gamePad.Triggers.Right > 0.2)
+            if (gamePad.Triggers.Right > 0.2)
             {
                 //GATTLING
                 if (currentWeapon == 1)
@@ -575,18 +527,9 @@ namespace SpaceGame
         /// Which direction to thrust in
         /// </summary>
         /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
-        public void setThrust(Vector2 initThrust)
+        public void setThrust(float initThrust)
         {
             playerThrust = initThrust;
-
-            if (invertedY)
-            {
-                playerThrust.Y = playerThrust.Y * -1;
-            }
-            if (invertedX)
-            {
-                playerThrust.X = playerThrust.X * -1;
-            }
         }
 
         public void setIsPlayerReady(bool initPlayerReady)
@@ -681,7 +624,7 @@ namespace SpaceGame
             return gatlingWeapon;
         }
 
-        public Vector2 getPlayerThrust()
+        public float getPlayerThrust()
         {
             return playerThrust;
         }
@@ -754,7 +697,8 @@ namespace SpaceGame
                 temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
             }
 
-            playerAcceleration = (playerThrust * PLAYER_THRUST_SCALE) /*add gravity effect here*/ + temp;
+            playerAcceleration.X = ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Sin(playerRotation)) + temp.X;
+            playerAcceleration.Y = -1 * ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Cos(playerRotation)) + temp.Y;
 
             temp = new Vector2();
 

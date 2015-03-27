@@ -11,6 +11,10 @@ using Microsoft.Xna.Framework.Media;
 
 namespace SpaceGame
 {
+    /// <summary>
+    /// This is the projectile child that is used by
+    /// the gatling weapon.
+    /// </summary>
     class Bullet : Projectile
     {
         const int BULLET_VELOCITY_INCREMENT = 13;
@@ -26,6 +30,15 @@ namespace SpaceGame
 
         int bulletSpread = 48;//DEFAULT: 48
 
+        /// <summary>
+        /// Constructor for Bullet class
+        /// </summary>
+        /// <param name="spawnX">Provides spawn X location.</param>
+        /// <param name="spawnY">Provides spawn Y location.</param>
+        /// <param name="startingVelocity">Provides current velocity from object that is shooting</param>
+        /// <param name="init_Rotation">Provides currect rotation from object that is shooting.</param>
+        /// <param name="init_PlayerBullet">Provides if the shooter is a player or not.</param>
+        /// <param name="gameTime">Provides the game time.</param>
         public Bullet(float spawnX, float spawnY, Vector2 startingVelocity, 
             float init_Rotation, bool init_PlayerBullet, GameTime gameTime)
         {
@@ -64,6 +77,12 @@ namespace SpaceGame
             position.Y = spawnY;
         }
 
+        /// <summary>
+        /// updates the bullet like a normal bullet,
+        /// flies straight until the designated life
+        /// runs out.
+        /// </summary>
+        /// <param name="gameTime">Provides the game time.</param>
         public override void update(GameTime gameTime)
         {
             position.X += velocity.X + bulletVelocityXIncrement;
