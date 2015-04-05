@@ -219,8 +219,19 @@ namespace SpaceGame
 
                                 //Keep track of distance between the target and me
                                 targetDistance = playersDistances[i];
+                            }
+                            //If the enemy is currently chasing something
+                            if(enemyState == EnemySwarmAIState.chasing)
+                            {
+                                //Check to see if i has a shorter distance
+                                if(targetDistance > playersDistances[i])
+                                {
+                                    //Keep track of what player I am targeting
+                                    targetIndex = i;
 
-                                
+                                    //Keep track of distance between the target and me
+                                    targetDistance = playersDistances[i];
+                                }
                             }
                         }
                     }

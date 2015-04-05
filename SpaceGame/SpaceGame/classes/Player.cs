@@ -32,20 +32,12 @@ namespace SpaceGame
 
         //Players texture
         Texture2D playerTexture;
-        Texture2D playerThrustTexture;
         Texture2D playerPredictionTexture;
 
         Color playerColor;
 
-        //Inverted Y or X?
-        bool invertedY = true;
-        bool invertedX = false;
-
         //Player Did Not Press Start(Not Player1)
         bool playerReady = false;
-
-        //Keyboard float
-        float keyboardVector;
 
         //Players location
         Vector2 playerLocation;
@@ -92,6 +84,10 @@ namespace SpaceGame
         //thrust is the triggers on the gamepad
         float playerThrust;
         const float PLAYER_THRUST_SCALE = .1f;
+        bool playerMoving = false;
+
+        //The maximum velocity in which direction assist will assist
+        const int PLAYER_DIRECTIONAL_ASSIT = 3; //Default 3
 
         //Player Boost Velocity
         const float PLAYER_BOOST_VELOCITY = 5;
@@ -120,6 +116,31 @@ namespace SpaceGame
         const int MAX_PREVIOUS_FRAMES = 500;
         int currentFrame = 0;
         Vector2[] playerPreviousLocation = new Vector2[MAX_PREVIOUS_FRAMES];
+        #endregion
+
+        #region"Animation Objects/Times"
+
+        #region"Thrust/Moving"
+        //Texture
+        Texture2D animation_ThrustTexture;
+
+        //View for the texture
+        Rectangle animation_ThrustRectangle;
+        int animation_thrust_WidthHeight = 60;
+        int animation_thrust_frame = 0;
+
+        //Time to add to current gameTime
+        int animation_thrust_frameTime = 0;
+        //startup frame time
+        int animation_thrust_startupTime = 20;//Milliseconds
+        //loop fram time
+        int animation_thrust_loopTime = 80;//Milliseconds
+
+        //thrust start
+        bool animation_thrust_starting = true;
+        #endregion
+
+
         #endregion
 
         //Constructor for player, starts/initializes everything, sets spawn location
@@ -153,8 +174,6 @@ namespace SpaceGame
             }
             #endregion
 
-            keyboardVector = 0;
-
             playerThrust = 0;
 
             playerAcceleration = new Vector2(0, 0);
@@ -172,6 +191,9 @@ namespace SpaceGame
             //Weapons:
             gatlingWeapon = new GatlingWeapon();
             missileWeapon = new MissileWeapon();
+
+            //Animation Objects:
+            animation_ThrustRectangle = new Rectangle(0, 0, animation_thrust_WidthHeight, animation_thrust_WidthHeight);
 
             this.LoadContent();
         }
@@ -196,6 +218,8 @@ namespace SpaceGame
             playerMissileTurretTexture = content.Load<Texture2D>("weapons/missile_turret");
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
+
+            animation_ThrustTexture = content.Load<Texture2D>("player/anims/player_ship_thrust");
         }
 
         /// <summary>
@@ -214,6 +238,8 @@ namespace SpaceGame
             playerReady = true;
             //Player didnt boost
             playerBoosted = false;
+            //Player isnt moving.
+            playerMoving = false;
 
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
@@ -235,6 +261,9 @@ namespace SpaceGame
 
             calculatePreviousLocation();
 
+            //Animation:
+            animation_thrust(gameTime);
+
             //Updates player location based on velocity
             playerLocation += playerVelocity; //ALWAYS ON BOTTOM
 
@@ -243,7 +272,7 @@ namespace SpaceGame
                 currentFrame = 0;
             }
         }
-        #region"update overload method for not player1 - Also DynamicSpawn method"
+        #region"update overload method for not player1"
         /// <summary>
         /// Overload of update method for players that
         /// are not player1
@@ -259,6 +288,8 @@ namespace SpaceGame
             playerReady = true;
             //Player didnt boost
             playerBoosted = false;
+            //Player isnt moving.
+            playerMoving = false;
 
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, gameTime);
@@ -288,6 +319,8 @@ namespace SpaceGame
                 currentFrame = 0;
             }
         }
+#endregion
+        #region"Dynamic Spawn"
         /// <summary>
         /// Overload of update method for players that
         /// are not player1
@@ -326,14 +359,15 @@ namespace SpaceGame
 
             //If the user moves the left thumbstick(in any direction)
             //Rotate Player
-            if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
+            if (gamePad.Triggers.Left >= 0.1)
             {
-                //Pass the X and Y value of left thumbstick to the thrust method in the Player class
+                //Pass the left trigger to thrust
                 setThrust(gamePad.Triggers.Left);
                 //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
             }
             else
             {
+                
                 GamePad.SetVibration(PlayerIndex.One, 0, 0);
             }
 
@@ -346,7 +380,7 @@ namespace SpaceGame
             }
             #endregion
 
-            //Set rotation of turret
+            #region"Turret Rotation"
             if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
             {
                 playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
@@ -364,6 +398,7 @@ namespace SpaceGame
                     //Make the turret have its previous angle relative to the ship
                 }
             }
+            #endregion
 
             #region"D-Pad"
             //Gatling
@@ -435,10 +470,15 @@ namespace SpaceGame
             }
 
             //If the user moves the left thumbstick(in any direction)
-            if ((gamePad.ThumbSticks.Left.X <= 0.2) || (gamePad.ThumbSticks.Left.X >= -0.2) || (gamePad.ThumbSticks.Left.Y >= 0.2) || (gamePad.ThumbSticks.Left.Y <= 0.2))
+            //Rotate Player
+            if (gamePad.Triggers.Left >= 0.1)
             {
-                //Pass the X and Y value to the thrust method in the Player class
+                //Pass the left trigger to thrust
                 setThrust(gamePad.Triggers.Left);
+                //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
+            }
+            else
+            {
             }
 
             #region"Boost"
@@ -529,12 +569,60 @@ namespace SpaceGame
         /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
         public void setThrust(float initThrust)
         {
+            playerMoving = true;
             playerThrust = initThrust;
         }
 
-        public void setIsPlayerReady(bool initPlayerReady)
+        public void animation_thrust(GameTime gameTime)
         {
-            playerReady = initPlayerReady;
+            if (playerMoving)
+            {
+                //Startup Flame
+                if(animation_thrust_starting)
+                {
+                    if(animation_thrust_frame <= 8)
+                    {
+                        if(gameTime.TotalGameTime.TotalMilliseconds >= animation_thrust_frameTime)
+                        {
+                            animation_thrust_frameTime = (int)gameTime.TotalGameTime.TotalMilliseconds + animation_thrust_startupTime;
+                            animation_thrust_frame++;
+                        }
+                    }
+                    else
+                    {
+                        animation_thrust_starting = false;
+                    }
+                }
+                //Loop
+                else
+                {
+                    if (gameTime.TotalGameTime.TotalMilliseconds >= animation_thrust_frameTime)
+                    {
+                        animation_thrust_frameTime = (int)gameTime.TotalGameTime.TotalMilliseconds + animation_thrust_loopTime;
+
+                        if (animation_thrust_frame >= 20)
+                        {
+                            animation_thrust_frame = 9;
+                        }
+                        else
+                        {
+                            animation_thrust_frame++;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                animation_thrust_frame = 0;
+                animation_thrust_starting = true;
+            }
+
+            //Sets the frame to the correct view location
+            animation_ThrustRectangle = new Rectangle(
+                (animation_thrust_frame % 12) * animation_thrust_WidthHeight, //X 
+                (animation_thrust_frame / 12) * animation_thrust_WidthHeight, //Y
+                animation_thrust_WidthHeight,                                 //Width
+                animation_thrust_WidthHeight);                                //Height
         }
 
         /// <summary>
@@ -614,6 +702,60 @@ namespace SpaceGame
             }
         }
 
+        /// <summary>
+        /// Calculate Acceleration
+        /// and calculate predictive path
+        /// </summary>
+        /// <param name="gravityList">Provides a list of all gravity wells near you.</param>
+        private void calcAcceleration(List<Gravity> gravityList)
+        {
+            Vector2 temp = new Vector2();
+
+            for (int i = 0; i < gravityList.Count(); i++)
+            {
+                temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
+            }
+
+            playerAcceleration.X = ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Sin(playerRotation)) + temp.X;
+            playerAcceleration.Y = -1 * ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Cos(playerRotation)) + temp.Y;
+
+            #region"Directional Assistance"
+            //VELX NEG, assist to go right(going left)
+            if (playerVelocity.X < -PLAYER_DIRECTIONAL_ASSIT && (playerRotation > 0 && playerRotation <= Math.PI))
+            {
+                playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
+            }
+            //VELX POS, assist to go left(going right)
+            if (playerVelocity.X > PLAYER_DIRECTIONAL_ASSIT && (playerRotation < 0 && playerRotation >= -Math.PI))
+            {
+                playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
+            }
+
+            //VELY POS, assist to go up(going down)
+            if (playerVelocity.Y > PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= 0 && Math.Abs(playerRotation) <= Math.PI / 2))
+            {
+                playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+            }
+            //VELY NEG, assist to go down(going up)
+            if (playerVelocity.Y < -PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= Math.PI / 2 && Math.Abs(playerRotation) <= Math.PI))
+            {
+                playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+            }
+            #endregion
+
+            temp = new Vector2();
+
+            playerVelocity += playerAcceleration;
+
+            this.calculatePrediction(gravityList);
+
+        }
+
+        public void setIsPlayerReady(bool initPlayerReady)
+        {
+            playerReady = initPlayerReady;
+        }
+
         public bool isPlayerReady()
         {
             return playerReady;
@@ -684,34 +826,6 @@ namespace SpaceGame
         }
 
         /// <summary>
-        /// Calculate Acceleration
-        /// and calculate predictive path
-        /// </summary>
-        /// <param name="gravityList">Provides a list of all gravity wells near you.</param>
-        private void calcAcceleration(List<Gravity> gravityList)
-        {
-            Vector2 temp = new Vector2();
-
-            for (int i = 0; i < gravityList.Count(); i++)
-            {
-                temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
-            }
-
-            playerAcceleration.X = ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Sin(playerRotation)) + temp.X;
-            playerAcceleration.Y = -1 * ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Cos(playerRotation)) + temp.Y;
-
-            temp = new Vector2();
-
-            playerVelocity += playerAcceleration;
-
-            //playerVelocity.X = MathHelper.Clamp(playerVelocity.X, (-1) * PLAYERMAX, PLAYERMAX);
-            //playerVelocity.Y = MathHelper.Clamp(playerVelocity.Y, (-1) * PLAYERMAX, PLAYERMAX);
-
-            this.calculatePrediction(gravityList);
-
-        }
-
-        /// <summary>
         /// Draws the player location
         /// and draws player predicted locations
         /// </summary>
@@ -729,6 +843,12 @@ namespace SpaceGame
                 {
                     spriteBatch.Draw(playerPredictionTexture, playerPredictedLocation[i], playerPredictedRectangle, Color.Green * 1f);
                 }
+            }
+
+            //Thrust Animation
+            if (playerMoving)
+            {
+                spriteBatch.Draw(animation_ThrustTexture, playerLocation, animation_ThrustRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
             }
 
             spriteBatch.Draw(playerTexture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);

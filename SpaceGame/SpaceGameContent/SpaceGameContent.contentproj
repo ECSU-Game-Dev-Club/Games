@@ -58,11 +58,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="player\coop_ship_test.png">
-      <Name>coop_ship_test</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
     <Compile Include="weapons\gatling_turret.png">
       <Name>gatling_turret</Name>
       <Importer>TextureImporter</Importer>
@@ -112,6 +107,13 @@
   <ItemGroup>
     <Compile Include="weapons\missile_turret.png">
       <Name>missile_turret</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="player\anims\player_ship_thrust.png">
+      <Name>player_ship_thrust</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
