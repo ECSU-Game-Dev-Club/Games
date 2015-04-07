@@ -77,6 +77,7 @@ namespace SpaceGame
         float playerRotationDifference;
         float playerDesiredRotation;
         const float MAX_PLAYER_ROT_SPEED = 0.1f;
+        bool playerRotating = false;
 
         float playerAimRotation;
         float previousPlayerAimRotation;
@@ -120,13 +121,17 @@ namespace SpaceGame
 
         #region"Animation Objects/Times"
 
+        //Normal frame size for animation
+        int animation_WidthHeight = 60;
+
         #region"Thrust/Moving"
         //Texture
         Texture2D animation_ThrustTexture;
 
         //View for the texture
         Rectangle animation_ThrustRectangle;
-        int animation_thrust_WidthHeight = 60;
+        
+        //Frame #
         int animation_thrust_frame = 0;
 
         //Time to add to current gameTime
@@ -138,6 +143,24 @@ namespace SpaceGame
 
         //thrust start
         bool animation_thrust_starting = true;
+        #endregion
+
+        #region"Rotation"
+        //Texture
+        Texture2D animation_RotationTexture;
+
+        //View for the texture
+        Rectangle animation_RotationRectangle;
+
+        //Frame #
+        int animation_rotation_frame = 0;
+
+        int animation_rotation_frameTime = 0;
+        int animation_rotation_timeDelay = 40;//Milliseconds
+
+        bool animation_rotation_flip = false;
+
+        
         #endregion
 
 
@@ -193,7 +216,8 @@ namespace SpaceGame
             missileWeapon = new MissileWeapon();
 
             //Animation Objects:
-            animation_ThrustRectangle = new Rectangle(0, 0, animation_thrust_WidthHeight, animation_thrust_WidthHeight);
+            animation_ThrustRectangle = new Rectangle(0, 0, animation_WidthHeight, animation_WidthHeight);
+            animation_RotationRectangle = new Rectangle(0, 0, animation_WidthHeight, animation_WidthHeight);
 
             this.LoadContent();
         }
@@ -219,7 +243,9 @@ namespace SpaceGame
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
 
+            //Animation:
             animation_ThrustTexture = content.Load<Texture2D>("player/anims/player_ship_thrust");
+            animation_RotationTexture = content.Load<Texture2D>("player/anims/player_rotate_left");
         }
 
         /// <summary>
@@ -244,13 +270,32 @@ namespace SpaceGame
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
 
-            if (gamepad.ThumbSticks.Left.X != 0 && gamepad.ThumbSticks.Left.Y != 0)
+            if ((gamepad.ThumbSticks.Left.X != 0 && gamepad.ThumbSticks.Left.Y != 0))
             {
                 //calculates player desired rotation based on gamepad.
                 playerDesiredRotation = (float)Math.Atan2(gamepad.ThumbSticks.Left.X, gamepad.ThumbSticks.Left.Y);
                 playerRotationDifference = Helper.WrapAngle(playerDesiredRotation - playerRotation);
                 playerRotationDifference = MathHelper.Clamp(playerRotationDifference, -MAX_PLAYER_ROT_SPEED, MAX_PLAYER_ROT_SPEED);
                 playerRotation = Helper.WrapAngle(playerRotationDifference + playerRotation);
+
+                if(playerRotationDifference > 0)
+                {
+                    animation_rotation_flip = true;
+                    playerRotating = true;
+                }
+                else if (playerRotationDifference < 0)
+                {
+                    animation_rotation_flip = false;
+                    playerRotating = true;
+                }
+                else
+                {
+                    playerRotating = false;
+                }
+            }
+            else
+            {
+                playerRotating = false;
             }
 
             //Clamp players velocity before adding to location
@@ -263,6 +308,7 @@ namespace SpaceGame
 
             //Animation:
             animation_thrust(gameTime);
+            animation_rotation(gameTime);
 
             //Updates player location based on velocity
             playerLocation += playerVelocity; //ALWAYS ON BOTTOM
@@ -283,6 +329,16 @@ namespace SpaceGame
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
             currentFrame++;
+
+            //This flips the rotation animation
+            if (gamepad.ThumbSticks.Left.X <= -0.2)
+            {
+                animation_rotation_flip = false;
+            }
+            if (gamepad.ThumbSticks.Left.X > 0.2)
+            {
+                animation_rotation_flip = true;
+            }
 
             //Player is playing
             playerReady = true;
@@ -349,7 +405,6 @@ namespace SpaceGame
         private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, GameTime gameTime)
         {
             #region"GamePad Movement Logic"
-
             //If the left thumbstick is pressed in
             //Toggle Prediction
             if (gamePad.Buttons.LeftStick != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftStick == ButtonState.Pressed)
@@ -367,7 +422,7 @@ namespace SpaceGame
             }
             else
             {
-                
+                setThrust(0);
                 GamePad.SetVibration(PlayerIndex.One, 0, 0);
             }
 
@@ -479,6 +534,7 @@ namespace SpaceGame
             }
             else
             {
+                setThrust(0);
             }
 
             #region"Boost"
@@ -573,6 +629,33 @@ namespace SpaceGame
             playerThrust = initThrust;
         }
 
+        public void animation_rotation(GameTime gameTime)
+        {
+            if (playerRotating)
+            {
+                if (animation_rotation_frame <= 1)
+                {
+                    if (gameTime.TotalGameTime.TotalMilliseconds >= animation_rotation_frameTime)
+                    {
+                        animation_rotation_frameTime = (int)gameTime.TotalGameTime.TotalMilliseconds + animation_rotation_timeDelay;
+                        animation_rotation_frame++;
+
+                        if (animation_rotation_frame > 1)
+                        {
+                            animation_rotation_frame = 0;
+                        }
+                    }
+                }
+
+                //Sets the frame to the correct view location
+                animation_RotationRectangle = new Rectangle(
+                    (animation_rotation_frame % 2) * animation_WidthHeight, //X 
+                    0,                                                      //Y
+                    animation_WidthHeight,                                  //Width
+                    animation_WidthHeight);                                 //Height
+            }
+        }
+
         public void animation_thrust(GameTime gameTime)
         {
             if (playerMoving)
@@ -610,19 +693,19 @@ namespace SpaceGame
                         }
                     }
                 }
+
+                //Sets the frame to the correct view location
+                animation_ThrustRectangle = new Rectangle(
+                    (animation_thrust_frame % 12) * animation_WidthHeight, //X 
+                    (animation_thrust_frame / 12) * animation_WidthHeight, //Y
+                    animation_WidthHeight,                                 //Width
+                    animation_WidthHeight);                                //Height
             }
             else
             {
                 animation_thrust_frame = 0;
                 animation_thrust_starting = true;
             }
-
-            //Sets the frame to the correct view location
-            animation_ThrustRectangle = new Rectangle(
-                (animation_thrust_frame % 12) * animation_thrust_WidthHeight, //X 
-                (animation_thrust_frame / 12) * animation_thrust_WidthHeight, //Y
-                animation_thrust_WidthHeight,                                 //Width
-                animation_thrust_WidthHeight);                                //Height
         }
 
         /// <summary>
@@ -720,26 +803,29 @@ namespace SpaceGame
             playerAcceleration.Y = -1 * ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Cos(playerRotation)) + temp.Y;
 
             #region"Directional Assistance"
-            //VELX NEG, assist to go right(going left)
-            if (playerVelocity.X < -PLAYER_DIRECTIONAL_ASSIT && (playerRotation > 0 && playerRotation <= Math.PI))
+            if (this.getPlayerThrust() > 0.1)
             {
-                playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
-            }
-            //VELX POS, assist to go left(going right)
-            if (playerVelocity.X > PLAYER_DIRECTIONAL_ASSIT && (playerRotation < 0 && playerRotation >= -Math.PI))
-            {
-                playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
-            }
+                //VELX NEG, assist to go right(going left)
+                if (playerVelocity.X < -PLAYER_DIRECTIONAL_ASSIT && (playerRotation > 0 && playerRotation <= Math.PI))
+                {
+                    playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
+                }
+                //VELX POS, assist to go left(going right)
+                if (playerVelocity.X > PLAYER_DIRECTIONAL_ASSIT && (playerRotation < 0 && playerRotation >= -Math.PI))
+                {
+                    playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
+                }
 
-            //VELY POS, assist to go up(going down)
-            if (playerVelocity.Y > PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= 0 && Math.Abs(playerRotation) <= Math.PI / 2))
-            {
-                playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
-            }
-            //VELY NEG, assist to go down(going up)
-            if (playerVelocity.Y < -PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= Math.PI / 2 && Math.Abs(playerRotation) <= Math.PI))
-            {
-                playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+                //VELY POS, assist to go up(going down)
+                if (playerVelocity.Y > PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= 0 && Math.Abs(playerRotation) <= Math.PI / 2))
+                {
+                    playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+                }
+                //VELY NEG, assist to go down(going up)
+                if (playerVelocity.Y < -PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= Math.PI / 2 && Math.Abs(playerRotation) <= Math.PI))
+                {
+                    playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+                }
             }
             #endregion
 
@@ -759,6 +845,11 @@ namespace SpaceGame
         public bool isPlayerReady()
         {
             return playerReady;
+        }
+
+        public float getRotationDifference()
+        {
+            return playerRotationDifference;
         }
 
         public GatlingWeapon getGatlingWeapon()
@@ -848,8 +939,9 @@ namespace SpaceGame
             //Thrust Animation
             if (playerMoving)
             {
-                spriteBatch.Draw(animation_ThrustTexture, playerLocation, animation_ThrustRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+                spriteBatch.Draw(animation_ThrustTexture, playerLocation, animation_ThrustRectangle, playerColor * this.getPlayerThrust(), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
             }
+            
 
             spriteBatch.Draw(playerTexture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
 
@@ -866,6 +958,19 @@ namespace SpaceGame
             }
             if (currentWeapon == 4) //???
             {
+            }
+
+            //RotationAnimation
+            if (playerRotating)
+            {
+                if (animation_rotation_flip)
+                {
+                    spriteBatch.Draw(animation_RotationTexture, playerLocation, animation_RotationRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
+                }
+                else
+                {
+                    spriteBatch.Draw(animation_RotationTexture, playerLocation, animation_RotationRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+                }
             }
 
             //THIS IS THE THRUST LAYER

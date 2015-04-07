@@ -774,7 +774,7 @@ namespace SpaceGame
                     }
                     if(i == 8)
                     {
-                        spriteBatch.DrawString(font, "Player 1 Rotation: " + player1.getRotation(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
+                        spriteBatch.DrawString(font, "Player 1 Thrust: " + player1.getPlayerThrust(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
                     }
 
                 }
