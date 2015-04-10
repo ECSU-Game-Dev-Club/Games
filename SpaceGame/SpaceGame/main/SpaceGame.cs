@@ -495,7 +495,7 @@ namespace SpaceGame
             }
 
             //Updates the player1 class and passes all inputs
-            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, gravityList, gameTime);
+            player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, mouse, mouse_OLDSTATE, gravityList, gameTime);
             #endregion
 
             #region"Player 2"
@@ -742,7 +742,7 @@ namespace SpaceGame
                 {
                     if (i == 0)
                     {
-                        spriteBatch.DrawString(font, "Left Thumbstick: " + gamePad1.ThumbSticks.Left + " Right Thumbstick: " + gamePad1.ThumbSticks.Right, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Green);
+                        spriteBatch.DrawString(font, "Left Thumbstick: " + gamePad1.ThumbSticks.Left + " Right Thumbstick: " + gamePad1.ThumbSticks.Right + " Keyboard Vel: " + player1.getKeyboardVector(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Green);
                     }
                     if (i == 1)
                     {
@@ -774,7 +774,7 @@ namespace SpaceGame
                     }
                     if(i == 8)
                     {
-                        spriteBatch.DrawString(font, "Player 1 Thrust: " + player1.getPlayerThrust(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
+                        spriteBatch.DrawString(font, "Player 1 Aim Rotation: " + player1.getRotation(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
                     }
 
                 }

@@ -16,6 +16,11 @@ namespace SpaceGame
         //Preferences
         bool staticTurrent = true;
 
+        //Gamepad Preferences
+        // 0 = Trigger Thrust
+        // 1 = Automatic Analog Thrust
+        int gamepadStyle = 0;//Default Style 0
+
         Rectangle playerRectangle;
         Rectangle playerPredictedRectangle;
         int width = 60;
@@ -65,6 +70,9 @@ namespace SpaceGame
 
         #region"Movement Variables"
 
+        //Keyboard Vector
+        Vector2 keyboardVector;
+
         //Players velocity and acceleration for calculating speed
         Vector2 playerVelocity;
         Vector2 playerAcceleration;
@@ -82,8 +90,10 @@ namespace SpaceGame
         float playerAimRotation;
         float previousPlayerAimRotation;
 
-        //thrust is the triggers on the gamepad
+        //thrust is the left trigger on the gamepad IN STYLE 1
         float playerThrust;
+        //thrust is the left analog IN STYLE 2
+        Vector2 playerThrustVector2;
         const float PLAYER_THRUST_SCALE = .1f;
         bool playerMoving = false;
 
@@ -171,6 +181,8 @@ namespace SpaceGame
         {
             playerIndex = init_playerIndex; //0 = first player, 1 = seconds player, etc...
 
+            keyboardVector = new Vector2(0, 0);
+
             content = new ContentManager(serviceProvider, "Content");
 
             playerTargetingLaserRectangle = new Rectangle((int)playerLocation.X, (int)playerLocation.Y, MAX_LASER_DISTANCE, 10);
@@ -198,6 +210,7 @@ namespace SpaceGame
             #endregion
 
             playerThrust = 0;
+            playerThrustVector2 = new Vector2(0, 0);
 
             playerAcceleration = new Vector2(0, 0);
 
@@ -256,7 +269,7 @@ namespace SpaceGame
         /// <param name="keyboard">Provides keyboard state.</param>
         /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
-        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
+        public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, MouseState mouse, MouseState mouse_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
             currentFrame++;
 
@@ -268,12 +281,21 @@ namespace SpaceGame
             playerMoving = false;
 
             //Figure out if user wants player to move(movement logic)
-            playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, gameTime);
+            playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, mouse, mouse_OLDSTATE, gameTime);
 
-            if ((gamepad.ThumbSticks.Left.X != 0 && gamepad.ThumbSticks.Left.Y != 0))
+            //Player Rotation
+            if ((gamepad.ThumbSticks.Left.X + keyboardVector.X != 0 || gamepad.ThumbSticks.Left.Y + keyboardVector.Y != 0))
             {
                 //calculates player desired rotation based on gamepad.
-                playerDesiredRotation = (float)Math.Atan2(gamepad.ThumbSticks.Left.X, gamepad.ThumbSticks.Left.Y);
+                if (gamepad.IsConnected)
+                {
+                    playerDesiredRotation = (float)Math.Atan2(gamepad.ThumbSticks.Left.X, gamepad.ThumbSticks.Left.Y);
+                }
+                //calculates player desired rotation based on keyboard.
+                else
+                {
+                    playerDesiredRotation = (float)Math.Atan2(keyboardVector.X, -keyboardVector.Y);
+                }
                 playerRotationDifference = Helper.WrapAngle(playerDesiredRotation - playerRotation);
                 playerRotationDifference = MathHelper.Clamp(playerRotationDifference, -MAX_PLAYER_ROT_SPEED, MAX_PLAYER_ROT_SPEED);
                 playerRotation = Helper.WrapAngle(playerRotationDifference + playerRotation);
@@ -402,110 +424,225 @@ namespace SpaceGame
         /// <param name="gamepad_OLDSTATE">Provides previous frame gamepad state.</param>
         /// /// <param name="keyboard">Provides keyboard state.</param>
         /// /// <param name="keyboard_OLDSTATE">Provides previous frame keyboard state.</param>
-        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, GameTime gameTime)
+        private void playerControls(GamePadState gamePad, GamePadState gamePad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, MouseState mouse, MouseState mouse_OLDSTATE, GameTime gameTime)
         {
-            #region"GamePad Movement Logic"
-            //If the left thumbstick is pressed in
-            //Toggle Prediction
-            if (gamePad.Buttons.LeftStick != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftStick == ButtonState.Pressed)
+            if (gamePad.IsConnected)
             {
-                calcLocationPrediction = !calcLocationPrediction;
-            }
-
-            //If the user moves the left thumbstick(in any direction)
-            //Rotate Player
-            if (gamePad.Triggers.Left >= 0.1)
-            {
-                //Pass the left trigger to thrust
-                setThrust(gamePad.Triggers.Left);
-                //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
-            }
-            else
-            {
-                setThrust(0);
-                GamePad.SetVibration(PlayerIndex.One, 0, 0);
-            }
-
-            #region"Boost"
-            //left shoulder or spacebar was clicked(pressed, then released)
-            //Boost player
-            if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
-            {
-                boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
-            }
-            #endregion
-
-            #region"Turret Rotation"
-            if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
-            {
-                playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
-            }
-            else
-            {
-                
-                if (staticTurrent)
+                #region"GamePad Movement Logic"
+                //If the left thumbstick is pressed in
+                //Toggle Prediction
+                if (gamePad.Buttons.LeftStick != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftStick == ButtonState.Pressed)
                 {
-                    playerAimRotation = playerRotation + (float)Math.PI;
+                    calcLocationPrediction = !calcLocationPrediction;
+                }
+
+                //If the user pressed left trigger
+                if (gamepadStyle == 0)
+                {
+                    //Rotate Player
+                    if (gamePad.Triggers.Left >= 0.1)
+                    {
+                        setThrust(gamePad.Triggers.Left);
+
+                        //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
+                    }
+                    else
+                    {
+                        setThrust(0);
+                        GamePad.SetVibration(PlayerIndex.One, 0, 0);
+                    }
+                }
+                if (gamepadStyle == 1)
+                {
+                    setThrust(gamePad.ThumbSticks.Left);
+                }
+
+                #region"Boost"
+                //left shoulder or spacebar was clicked(pressed, then released)
+                //Boost player
+                if ((gamePad.Buttons.LeftShoulder != ButtonState.Pressed && gamePad_OLDSTATE.Buttons.LeftShoulder == ButtonState.Pressed))
+                {
+                    boostDirection(gamePad.ThumbSticks.Left.X, gamePad.ThumbSticks.Left.Y);
+                }
+                #endregion
+
+                #region"Turret Rotation"
+                if (Math.Abs(gamePad.ThumbSticks.Right.X) + Math.Abs(gamePad.ThumbSticks.Right.Y) > 0.1)
+                {
+                    playerAimRotation = (float)Math.Atan2(gamePad.ThumbSticks.Right.X * (-1), gamePad.ThumbSticks.Right.Y * (-1));
                     previousPlayerAimRotation = playerAimRotation;
                 }
                 else
                 {
-                    //Make the turret have its previous angle relative to the ship
+                    if (staticTurrent)
+                    {
+                        playerAimRotation = playerRotation + (float)Math.PI;
+                        previousPlayerAimRotation = playerAimRotation;
+                    }
+                    else
+                    {
+                        //Make the turret have its previous angle relative to the ship
+                        // playerAimRotation = (playerRotation - previousPlayerAimRotation);
+                    }
                 }
-            }
-            #endregion
+                #endregion
 
-            #region"D-Pad"
-            //Gatling
-            if (gamePad.DPad.Up != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Up == ButtonState.Pressed)
-            {
-                currentWeapon = 1;
-            }
-            //???
-            if (gamePad.DPad.Left != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Left == ButtonState.Pressed)
-            {
-                currentWeapon = 2;
-            }
-            //???
-            if (gamePad.DPad.Down != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Down == ButtonState.Pressed)
-            {
-                currentWeapon = 3;
-            }
-            //???
-            if (gamePad.DPad.Right != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Right == ButtonState.Pressed)
-            {
-                currentWeapon = 4;
-            }
-            #endregion
+                #region"D-Pad"
+                //Gatling
+                if (gamePad.DPad.Up != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Up == ButtonState.Pressed)
+                {
+                    currentWeapon = 1;
+                }
+                //???
+                if (gamePad.DPad.Left != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Left == ButtonState.Pressed)
+                {
+                    currentWeapon = 2;
+                }
+                //???
+                if (gamePad.DPad.Down != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Down == ButtonState.Pressed)
+                {
+                    currentWeapon = 3;
+                }
+                //???
+                if (gamePad.DPad.Right != ButtonState.Pressed && gamePad_OLDSTATE.DPad.Right == ButtonState.Pressed)
+                {
+                    currentWeapon = 4;
+                }
+                #endregion
 
-            #region"Weapons"
-            if (gamePad.Triggers.Right > 0.2)
-            {
-                //GATLING
-                if (currentWeapon == 1)
+                #region"Shooting"
+                if (gamePad.Triggers.Right > 0.2)
                 {
-                    gatlingWeapon.shoot(gameTime, this, gamePad);
+                    //GATLING
+                    if (currentWeapon == 1)
+                    {
+                        gatlingWeapon.shoot(gameTime, this, gamePad);
+                    }
+                    if (currentWeapon == 2)
+                    {
+                        //???
+                    }
+                    if (currentWeapon == 3)
+                    {
+                        //???
+                    }
+                    if (currentWeapon == 4)
+                    {
+                        //???
+                    }
                 }
-                if (currentWeapon == 2)
+                else
                 {
-                    //???
+                    gatlingWeapon.setShooting(false);
                 }
-                if (currentWeapon == 3)
-                {
-                    //???
-                }
-                if (currentWeapon == 4)
-                {
-                    //???
-                }
+                #endregion
+
+                #endregion
             }
             else
             {
-                gatlingWeapon.setShooting(false);
-            }
-            #endregion
+                #region"Keyboard Movement Logic"
 
-            #endregion
+                //If the Tab button on keyboard is pressed
+                //Toggle Prediction
+                if (keyboard.IsKeyUp(Keys.Tab) && keyboard_OLDSTATE.IsKeyDown(Keys.Tab))
+                {
+                    calcLocationPrediction = !calcLocationPrediction;
+                }
+
+                //If keyboard key 'Up' is pressed
+                if (keyboard.IsKeyDown(Keys.Up) || keyboard.IsKeyDown(Keys.W))
+                {
+                    //The user is pressing UP so the Y value is +1
+                    keyboardVector.Y = -1;
+
+                    //Passing the keyboards vector to player1.
+                    setKeyboardThrust(keyboardVector);
+                }
+                //If keyboard key 'Down' is pressed
+                else if (keyboard.IsKeyDown(Keys.Down) || keyboard.IsKeyDown(Keys.S))
+                {
+                    //The user is pressing DOWN so the Y value is -1
+                    keyboardVector.Y = 1;
+
+                    //Passing the keyboards vector to player1.
+                    setKeyboardThrust(keyboardVector);
+
+                }
+                //Up or Down not pressed
+                else
+                {
+                    keyboardVector.Y = 0;
+                    setKeyboardThrust(keyboardVector);
+                }
+                //If keyboard key 'Left' is pressed
+                if (keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A))
+                {
+                    //The user is pressing LEFT so the X value is -1
+                    keyboardVector.X = -1;
+
+                    //Passing the keyboards vector to player1.
+                    setKeyboardThrust(keyboardVector);
+                }
+                //If keyboard key 'Right' is pressed
+                else if (keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D))
+                {
+                    //The user is pressing RIGHT so the X value is +1
+                    keyboardVector.X = 1;
+
+                    //Passing the keyboards vector to player1.
+                    setKeyboardThrust(keyboardVector);
+                }
+                //Left or Right not pressed
+                else
+                {
+                    keyboardVector.X = 0;
+                    setKeyboardThrust(keyboardVector);
+                }
+
+                //Spacebar
+                if ((keyboard.IsKeyUp(Keys.Space) && keyboard_OLDSTATE.IsKeyDown(Keys.Space)))
+                {
+                    boostDirection(keyboardVector.X, -keyboardVector.Y);
+                }
+                #endregion
+
+                #region"Mouse Logic - WITH DEVMODE OFF ONLY!"
+                //BEFORE FINAL RELEASE, REMOVE THIS.
+                if (SpaceGame.devMode == false) //BEFORE FINAL RELEASE, REMOVE THIS.
+                {
+                    //Left Mouse Button
+                    if (mouse.LeftButton == ButtonState.Pressed)
+                    {
+                        //GATLING
+                        if (currentWeapon == 1)
+                        {
+                            gatlingWeapon.shoot(gameTime, this, gamePad);
+                        }
+                        if (currentWeapon == 2)
+                        {
+                            //???
+                        }
+                        if (currentWeapon == 3)
+                        {
+                            //???
+                        }
+                        if (currentWeapon == 4)
+                        {
+                            //???
+                        }
+                    }
+                    else
+                    {
+                        gatlingWeapon.setShooting(false);
+                    }
+
+                    //Turret Rotation
+                    playerAimRotation = Helper.TurnToFace_Radians(playerLocation, new Vector2(mouse.X, mouse.Y), playerAimRotation, 10);
+                    
+                }
+                #endregion
+            }
         }
         #region"playerControls Overload"
         /// <summary>
@@ -524,17 +661,25 @@ namespace SpaceGame
                 calcLocationPrediction = !calcLocationPrediction;
             }
 
-            //If the user moves the left thumbstick(in any direction)
-            //Rotate Player
-            if (gamePad.Triggers.Left >= 0.1)
+            //If the user pressed left trigger
+            if (gamepadStyle == 0)
             {
-                //Pass the left trigger to thrust
-                setThrust(gamePad.Triggers.Left);
-                //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
+                //Rotate Player
+                if (gamePad.Triggers.Left >= 0.1)
+                {
+                    setThrust(gamePad.Triggers.Left);
+
+                    //GamePad.SetVibration(PlayerIndex.One, Math.Sqrt(Math.Pow(gamePad.ThumbSticks.Left.X,2) + Math.Pow(gamePad.ThumbSticks.Left.Y,2)), 0);
+                }
+                else
+                {
+                    setThrust(0);
+                    GamePad.SetVibration(PlayerIndex.One, 0, 0);
+                }
             }
-            else
+            if (gamepadStyle == 1)
             {
-                setThrust(0);
+                setThrust(gamePad.ThumbSticks.Left);
             }
 
             #region"Boost"
@@ -622,11 +767,42 @@ namespace SpaceGame
         /// <summary>
         /// Which direction to thrust in
         /// </summary>
-        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
+        /// <param name="initThrust">Provides a float(0-1). This float comes from LEFT TRIGGER</param>
         public void setThrust(float initThrust)
         {
-            playerMoving = true;
+            if (initThrust > 0.1)
+            {
+                playerMoving = true;
+            }
             playerThrust = initThrust;
+        }
+        /// <summary>
+        /// Which direction to thrust in Overide
+        /// </summary>
+        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
+        public void setThrust(Vector2 analog)
+        {
+            if (Math.Abs(analog.X) + Math.Abs(analog.Y) > 0)
+            {
+                playerMoving = true;
+            }
+
+            playerThrustVector2.X = analog.X;
+            playerThrustVector2.Y = -analog.Y;
+        }
+        /// <summary>
+        /// Which direction to thrust in using the keyboard
+        /// </summary>
+        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from Keyboard simmulated thumbstick</param>
+        public void setKeyboardThrust(Vector2 analog)
+        {
+            if (Math.Abs(analog.X) + Math.Abs(analog.Y) > 0)
+            {
+                playerMoving = true;
+            }
+
+            keyboardVector.X = analog.X;
+            keyboardVector.Y = analog.Y;
         }
 
         public void animation_rotation(GameTime gameTime)
@@ -799,8 +975,44 @@ namespace SpaceGame
                 temp += gravityList[i].calcGVectorAcceleration(playerLocation.X, playerLocation.Y, PLAYER_MASS);
             }
 
-            playerAcceleration.X = ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Sin(playerRotation)) + temp.X;
-            playerAcceleration.Y = -1 * ((playerThrust * PLAYER_THRUST_SCALE) * (float)Math.Cos(playerRotation)) + temp.Y;
+            if (gamepadStyle == 0)
+            {
+                playerAcceleration.X = ((this.getPlayerThrust() * PLAYER_THRUST_SCALE) * (float)Math.Sin(playerRotation)) + temp.X;
+                playerAcceleration.Y = -1 * ((this.getPlayerThrust()  * PLAYER_THRUST_SCALE) * (float)Math.Cos(playerRotation)) + temp.Y;
+            }
+            if (gamepadStyle == 1)
+            {
+                playerAcceleration = ((playerThrustVector2 + keyboardVector) * PLAYER_THRUST_SCALE) + temp;
+
+                /*
+                #region"Directional Assistance"
+                if (this.getPlayerThrust() > 0.1)
+                {
+                    //VELX NEG, assist to go right(going left)
+                    if (playerVelocity.X < -PLAYER_DIRECTIONAL_ASSIT && (playerDesiredRotation > 0 && playerDesiredRotation <= Math.PI))
+                    {
+                        playerAcceleration.X = (this.getPlayerThrust() * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerDesiredRotation)) + temp.X;
+                    }
+                    //VELX POS, assist to go left(going right)
+                    if (playerVelocity.X > PLAYER_DIRECTIONAL_ASSIT && (playerDesiredRotation < 0 && playerDesiredRotation >= -Math.PI))
+                    {
+                        playerAcceleration.X = (this.getPlayerThrust() * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerDesiredRotation)) + temp.X;
+                    }
+
+                    //VELY POS, assist to go up(going down)
+                    if (playerVelocity.Y > PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerDesiredRotation) >= 0 && Math.Abs(playerDesiredRotation) <= Math.PI / 2))
+                    {
+                        playerAcceleration.Y = (this.getPlayerThrust() * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerDesiredRotation)) + temp.Y;
+                    }
+                    //VELY NEG, assist to go down(going up)
+                    if (playerVelocity.Y < -PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerDesiredRotation) >= Math.PI / 2 && Math.Abs(playerDesiredRotation) <= Math.PI))
+                    {
+                        playerAcceleration.Y = (this.getPlayerThrust() * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerDesiredRotation)) + temp.Y;
+                    }
+                }
+                #endregion
+                */
+            }
 
             #region"Directional Assistance"
             if (this.getPlayerThrust() > 0.1)
@@ -808,23 +1020,23 @@ namespace SpaceGame
                 //VELX NEG, assist to go right(going left)
                 if (playerVelocity.X < -PLAYER_DIRECTIONAL_ASSIT && (playerRotation > 0 && playerRotation <= Math.PI))
                 {
-                    playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
+                    playerAcceleration.X = (this.getPlayerThrust() * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
                 }
                 //VELX POS, assist to go left(going right)
                 if (playerVelocity.X > PLAYER_DIRECTIONAL_ASSIT && (playerRotation < 0 && playerRotation >= -Math.PI))
                 {
-                    playerAcceleration.X = (playerThrust * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
+                    playerAcceleration.X = (this.getPlayerThrust() * (PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.X) / 2)) * (float)Math.Sin(playerRotation)) + temp.X;
                 }
 
                 //VELY POS, assist to go up(going down)
                 if (playerVelocity.Y > PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= 0 && Math.Abs(playerRotation) <= Math.PI / 2))
                 {
-                    playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+                    playerAcceleration.Y = (this.getPlayerThrust() * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
                 }
                 //VELY NEG, assist to go down(going up)
                 if (playerVelocity.Y < -PLAYER_DIRECTIONAL_ASSIT && (Math.Abs(playerRotation) >= Math.PI / 2 && Math.Abs(playerRotation) <= Math.PI))
                 {
-                    playerAcceleration.Y = (playerThrust * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
+                    playerAcceleration.Y = (this.getPlayerThrust() * (-1 * PLAYER_THRUST_SCALE * (Math.Abs(playerVelocity.Y) / 2)) * (float)Math.Cos(playerRotation)) + temp.Y;
                 }
             }
             #endregion
@@ -842,6 +1054,11 @@ namespace SpaceGame
             playerReady = initPlayerReady;
         }
 
+        public void setGamepadStyle(int style)
+        {
+            gamepadStyle = style;
+        }
+
         public bool isPlayerReady()
         {
             return playerReady;
@@ -857,9 +1074,44 @@ namespace SpaceGame
             return gatlingWeapon;
         }
 
+        public int getGamepadStyle()
+        {
+            return gamepadStyle;
+        }
+
+        public Vector2 getKeyboardVector()
+        {
+            return keyboardVector;
+        }
+
         public float getPlayerThrust()
         {
-            return playerThrust;
+            if (gamepadStyle == 0)
+            {
+                if (Math.Abs(keyboardVector.X) + Math.Abs(keyboardVector.Y) <= 0)
+                {
+                    return playerThrust;
+                }
+                else
+                {
+                    return Math.Abs(keyboardVector.X) + Math.Abs(keyboardVector.Y);
+                }
+            }
+            else if (gamepadStyle == 1)
+            {
+                if (Math.Abs(keyboardVector.X) + Math.Abs(keyboardVector.Y) <= 0)
+                {
+                    return Math.Abs(playerThrustVector2.X) + Math.Abs(playerThrustVector2.Y);
+                }
+                else
+                {
+                    return Math.Abs(keyboardVector.X) + Math.Abs(keyboardVector.Y);
+                }
+            }
+            else
+            {
+                return playerThrust;
+            }
         }
 
         public int getCurrentWeapon()
@@ -867,14 +1119,14 @@ namespace SpaceGame
             return currentWeapon;
         }
 
-        public float getAimRotation()
-        {
-            return playerAimRotation;
-        }
-
         public float getRotation()
         {
             return playerRotation;
+        }
+
+        public float getAimRotation()
+        {
+            return playerAimRotation;
         }
 
         public bool getPlayerBoost()
@@ -939,10 +1191,9 @@ namespace SpaceGame
             //Thrust Animation
             if (playerMoving)
             {
-                spriteBatch.Draw(animation_ThrustTexture, playerLocation, animation_ThrustRectangle, playerColor * this.getPlayerThrust(), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+                spriteBatch.Draw(animation_ThrustTexture, playerLocation, animation_ThrustRectangle, playerColor * (this.getPlayerThrust() + (Math.Abs(keyboardVector.X) + Math.Abs(keyboardVector.Y))), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
             }
-            
-
+            //Rotation animation
             spriteBatch.Draw(playerTexture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
 
             if (currentWeapon == 1) //Gatling Cannon
