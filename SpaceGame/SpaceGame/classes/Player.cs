@@ -13,6 +13,9 @@ namespace SpaceGame
 {
     class Player
     {
+        //Number of players playing
+        static int numOfPlayers = 0;
+
         //Preferences
         bool staticTurrent = true;
 
@@ -46,6 +49,46 @@ namespace SpaceGame
 
         //Players location
         Vector2 playerLocation;
+
+        #region"Health / Shield"
+
+        bool playerHurt = false;
+
+        /************
+         * HEALTH
+        ************/
+        //Maximum Health Amount
+        double MAX_HEALTH_AMOUNT;
+
+        //Health Amount
+        double playerHealth;
+
+        int playerHealthSquares;
+
+        double[] playerHealthSquareArray;
+
+        int numOfExtraHealthSquares = 0;//For implementing getting more health
+
+        /************
+         * SHIELD
+        ************/
+        Texture2D playerShield_Texture;
+
+        int MAX_SHIELD_AMOUNT;
+
+        //Shield Amount
+        double playerShield;
+
+        int shieldIncrimentAmount = 10;
+
+        int numOfExtraShield = 0;//For implementing getting more shields
+
+        int shieldRecargeWaitTime = 8;//In Seconds
+        int shieldTimeStamp = 0;
+
+        double shieldRecargeRate = 10;
+
+        #endregion
 
         #region"Weapons"
         //Current weapon(1=gatling 2=missile 3=??? 4=???)
@@ -190,22 +233,70 @@ namespace SpaceGame
             playerLocation.X = x;
             playerLocation.Y = y;
 
-            #region"Set Player Colors"
+            #region"Set Player Colors and Health"
             if (playerIndex == 0)
             {
                 playerColor = Color.White;
+
+                /************
+                 * HEALTH
+                ************/
+                MAX_HEALTH_AMOUNT = 40 + (numOfExtraHealthSquares * 10);
+                playerHealth = MAX_HEALTH_AMOUNT;
+
+                /************
+                 * SHIELD
+                ************/
+                MAX_SHIELD_AMOUNT = 10 + (numOfExtraShield * shieldIncrimentAmount);
+                playerShield = MAX_SHIELD_AMOUNT;
             }
             else if (playerIndex == 1)
             {
                 playerColor = Color.Yellow;
+
+                /************
+                 * HEALTH
+                ************/
+                MAX_HEALTH_AMOUNT = 10 + (numOfExtraHealthSquares * 10);
+                playerHealth = MAX_HEALTH_AMOUNT;
+
+                /************
+                 * SHIELD
+                ************/
+                MAX_SHIELD_AMOUNT = 10 + (numOfExtraShield * shieldIncrimentAmount);
+                playerShield = MAX_SHIELD_AMOUNT;
             }
             else if (playerIndex == 2)
             {
                 playerColor = Color.Fuchsia;
+
+                /************
+                 * HEALTH
+                ************/
+                MAX_HEALTH_AMOUNT = 10 + (numOfExtraHealthSquares * 10);
+                playerHealth = MAX_HEALTH_AMOUNT;
+
+                /************
+                 * SHIELD
+                ************/
+                MAX_SHIELD_AMOUNT = 10 + (numOfExtraShield * shieldIncrimentAmount);
+                playerShield = MAX_SHIELD_AMOUNT;
             }
             else if (playerIndex == 3)
             {
                 playerColor = Color.DeepSkyBlue;
+
+                /************
+                 * HEALTH
+                ************/
+                MAX_HEALTH_AMOUNT = 10 + (numOfExtraHealthSquares * 10);
+                playerHealth = MAX_HEALTH_AMOUNT;
+
+                /************
+                 * SHIELD
+                ************/
+                MAX_SHIELD_AMOUNT = 10 + (numOfExtraShield * shieldIncrimentAmount);
+                playerShield = MAX_SHIELD_AMOUNT;
             }
             #endregion
 
@@ -241,20 +332,15 @@ namespace SpaceGame
         /// </summary>
         private void LoadContent()
         {
-            if (playerIndex == 0)
-            {
-                playerTexture = content.Load<Texture2D>("player/player_ship");
-            }
-            else
-            {
-                playerTexture = content.Load<Texture2D>("player/player_ship_mk2");
-            }
+            playerTexture = content.Load<Texture2D>("player/player_ship");
 
             playerGatlingTurretTexture = content.Load<Texture2D>("weapons/gatling_turret");
 
             playerMissileTurretTexture = content.Load<Texture2D>("weapons/missile_turret");
 
             playerPredictionTexture = content.Load<Texture2D>("whiteTexture");
+
+            playerShield_Texture = content.Load<Texture2D>("player/player_ship_shields");
 
             //Animation:
             animation_ThrustTexture = content.Load<Texture2D>("player/anims/player_ship_thrust");
@@ -271,7 +357,12 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, KeyboardState keyboard, KeyboardState keyboard_OLDSTATE, MouseState mouse, MouseState mouse_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
+            //Player Initialy isnt hurt
+            playerHurt = false;
+
             currentFrame++;
+
+            numOfPlayers++;
 
             //Player is playing
             playerReady = true;
@@ -279,6 +370,10 @@ namespace SpaceGame
             playerBoosted = false;
             //Player isnt moving.
             playerMoving = false;
+
+            //Sets Health Squares reletive to the 
+            //player health and extra health squares
+            this.setHealthSquares(gameTime);
 
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, keyboard, keyboard_OLDSTATE, mouse, mouse_OLDSTATE, gameTime);
@@ -350,7 +445,12 @@ namespace SpaceGame
         /// <param name="gravityList">Provides the total number of gravity wells near you.</param>
         public void update(GamePadState gamepad, GamePadState gamepad_OLDSTATE, List<Gravity> gravityList, GameTime gameTime)
         {
+            //Player Initialy isnt hurt
+            playerHurt = false;
+
             currentFrame++;
+
+            numOfPlayers++;
 
             //This flips the rotation animation
             if (gamepad.ThumbSticks.Left.X <= -0.2)
@@ -368,6 +468,10 @@ namespace SpaceGame
             playerBoosted = false;
             //Player isnt moving.
             playerMoving = false;
+
+            //Sets Health Squares reletive to the 
+            //player health and extra health squares
+            this.setHealthSquares(gameTime);
 
             //Figure out if user wants player to move(movement logic)
             playerControls(gamepad, gamepad_OLDSTATE, gameTime);
@@ -764,46 +868,7 @@ namespace SpaceGame
         #endregion
 
 
-        /// <summary>
-        /// Which direction to thrust in
-        /// </summary>
-        /// <param name="initThrust">Provides a float(0-1). This float comes from LEFT TRIGGER</param>
-        public void setThrust(float initThrust)
-        {
-            if (initThrust > 0.1)
-            {
-                playerMoving = true;
-            }
-            playerThrust = initThrust;
-        }
-        /// <summary>
-        /// Which direction to thrust in Overide
-        /// </summary>
-        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
-        public void setThrust(Vector2 analog)
-        {
-            if (Math.Abs(analog.X) + Math.Abs(analog.Y) > 0)
-            {
-                playerMoving = true;
-            }
-
-            playerThrustVector2.X = analog.X;
-            playerThrustVector2.Y = -analog.Y;
-        }
-        /// <summary>
-        /// Which direction to thrust in using the keyboard
-        /// </summary>
-        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from Keyboard simmulated thumbstick</param>
-        public void setKeyboardThrust(Vector2 analog)
-        {
-            if (Math.Abs(analog.X) + Math.Abs(analog.Y) > 0)
-            {
-                playerMoving = true;
-            }
-
-            keyboardVector.X = analog.X;
-            keyboardVector.Y = analog.Y;
-        }
+        
 
         public void animation_rotation(GameTime gameTime)
         {
@@ -1049,6 +1114,158 @@ namespace SpaceGame
 
         }
 
+        public void respawnPlayer()
+        {
+            playerHealth = MAX_HEALTH_AMOUNT;
+            playerShield = MAX_SHIELD_AMOUNT;
+        }
+
+        public bool isPlayerReady()
+        {
+            return playerReady;
+        }
+
+        public void hurtPlayer(double hurt)
+        {
+            playerHurt = true;
+
+            shieldTimeStamp = -1;
+
+            if (playerShield <= 0)
+            {
+                playerHealth = playerHealth - hurt;
+            }
+            else
+            {
+                playerShield = playerShield - hurt;
+            }
+        }
+
+        #region"Setters
+
+        /// <summary>
+        /// Which direction to thrust in
+        /// </summary>
+        /// <param name="initThrust">Provides a float(0-1). This float comes from LEFT TRIGGER</param>
+        public void setThrust(float initThrust)
+        {
+            if (initThrust > 0.1)
+            {
+                playerMoving = true;
+            }
+            playerThrust = initThrust;
+        }
+        /// <summary>
+        /// Which direction to thrust in Overide
+        /// </summary>
+        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from LEFT THUMBSTICK</param>
+        public void setThrust(Vector2 analog)
+        {
+            if (Math.Abs(analog.X) + Math.Abs(analog.Y) > 0)
+            {
+                playerMoving = true;
+            }
+
+            playerThrustVector2.X = analog.X;
+            playerThrustVector2.Y = -analog.Y;
+        }
+        /// <summary>
+        /// Which direction to thrust in using the keyboard
+        /// </summary>
+        /// <param name="initThrust">Provides a Vector2 X(0-1) and Y(0-1). This vector comes from Keyboard simmulated thumbstick</param>
+        public void setKeyboardThrust(Vector2 analog)
+        {
+            if (Math.Abs(analog.X) + Math.Abs(analog.Y) > 0)
+            {
+                playerMoving = true;
+            }
+
+            keyboardVector.X = analog.X;
+            keyboardVector.Y = analog.Y;
+        }
+
+        public void setHealthSquares(GameTime gameTime)
+        {
+            //Shields
+            if(shieldTimeStamp == -1)
+            {
+                shieldTimeStamp = gameTime.TotalGameTime.Seconds + shieldRecargeWaitTime;
+            }
+
+            if (playerShield < MAX_SHIELD_AMOUNT)
+            {
+                if (gameTime.TotalGameTime.Seconds > shieldTimeStamp)
+                {
+                    shieldTimeStamp = gameTime.TotalGameTime.Seconds + shieldRecargeWaitTime;
+                    playerShield += shieldIncrimentAmount;
+
+                    if(playerShield > MAX_SHIELD_AMOUNT)
+                    {
+                        playerShield = MAX_SHIELD_AMOUNT;
+                    }
+                }
+            }
+
+
+            //If first player
+            if (playerIndex == 0)
+            {
+                //Set everything to zero first
+                playerHealthSquares = (int)Math.Ceiling(((double)playerHealth / 10)) - ((numOfPlayers - 1) * 10);
+
+                if (playerHealthSquares >= 0)
+                {
+                    playerHealthSquareArray = new double[playerHealthSquares];
+                }
+                else
+                {
+                    playerHealthSquareArray = new double[0];
+                }
+
+                //Loop for every tenth place of player health, minus the number of players(excluding player 1) * 10
+                for (int i = 0; i < playerHealthSquares; i++)
+                {
+                    //If player is not dead
+                    if(playerHealth > 0)
+                    {
+                       //if it is the last square
+                        if (i == playerHealthSquares - 1)
+                        {
+                            //If the health is divisible by 10
+                           if(playerHealth % 10 == 0)
+                           {
+                               playerHealthSquareArray[i] = 10;
+                           }
+                           else
+                           {
+                               playerHealthSquareArray[i] =playerHealth % 10;
+                           }
+                        }
+                        //If it isnt the last square, it is full!
+                        else
+                        {
+                            playerHealthSquareArray[i] =10;
+                        }
+                    }
+                }
+            }
+            //If not first player
+            else
+            {
+
+            }
+        }
+
+        public void AddOneToExtraNumOfHealthSquares()
+        {
+            numOfExtraHealthSquares++;
+        }
+
+        public void setNumOfPlayers(int num)
+        {
+            numOfPlayers = num;
+        }
+
         public void setIsPlayerReady(bool initPlayerReady)
         {
             playerReady = initPlayerReady;
@@ -1059,9 +1276,45 @@ namespace SpaceGame
             gamepadStyle = style;
         }
 
-        public bool isPlayerReady()
+        #endregion
+
+        #region"Getters"
+
+        public bool getPlayerHurt()
         {
-            return playerReady;
+            return playerHurt;
+        }
+
+        public int getNumOfExtraHealthSquares()
+        {
+            return numOfExtraHealthSquares;
+        }
+
+        public double getPlayerHealthSquareAmount(int i)
+        {
+            return playerHealthSquareArray[i];
+        }
+
+        public double getPlayerHealth()
+        {
+            if (playerHealth > 0)
+            {
+                return playerHealth;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public int getNumOfHealthSquares()
+        {
+            return playerHealthSquares;
+        }
+
+        public int getNumOfPlayers()
+        {
+            return numOfPlayers;
         }
 
         public float getRotationDifference()
@@ -1167,6 +1420,25 @@ namespace SpaceGame
         {
             return playerPredictedLocation[k];
         }
+        /// <summary>
+        /// Returns the players current shield amount
+        /// </summary>
+        public double getPlayerShield()
+        {
+            return playerShield;
+        }
+
+        public int getPlayerMaxShield()
+        {
+            return MAX_SHIELD_AMOUNT;
+        }
+
+        public int getExtraNumOfShields()
+        {
+            return numOfExtraShield;
+        }
+
+        #endregion
 
         /// <summary>
         /// Draws the player location
@@ -1193,8 +1465,23 @@ namespace SpaceGame
             {
                 spriteBatch.Draw(animation_ThrustTexture, playerLocation, animation_ThrustRectangle, playerColor * (this.getPlayerThrust() + (Math.Abs(keyboardVector.X) + Math.Abs(keyboardVector.Y))), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
             }
-            //Rotation animation
+
+            //Draw Player
             spriteBatch.Draw(playerTexture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+
+            //If Hurt
+            if(playerHurt)
+            {
+                //Show Shields
+                if (playerShield > 0)
+                {
+                    spriteBatch.Draw(playerShield_Texture, playerLocation, null, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
+                }
+                else
+                {
+                    
+                }
+            }
 
             if (currentWeapon == 1) //Gatling Cannon
             {
@@ -1223,9 +1510,6 @@ namespace SpaceGame
                     spriteBatch.Draw(animation_RotationTexture, playerLocation, animation_RotationRectangle, playerColor, playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
                 }
             }
-
-            //THIS IS THE THRUST LAYER
-            //spriteBatch.Draw(playerThrustTexture, playerLocation, null, Color.White * (Math.Abs(playerThrust.X) + Math.Abs(playerThrust.Y)), playerRotation, playerOrigin, 1.0f, SpriteEffects.None, 0);
         }
     }
 }

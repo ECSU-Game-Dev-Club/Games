@@ -77,6 +77,9 @@ namespace SpaceGame
         //1x1 white texture
         Texture2D whiteTexture;
 
+        //Health Square Texture
+        Texture2D healthSquareTexture;
+
         //Maximum distance between all targetting enemies
         double maxEnemyDistanceFromPlayer = 0;
         //atleast one enemy is targetting the player
@@ -172,6 +175,8 @@ namespace SpaceGame
 
             gattlingBulletTexture = Content.Load<Texture2D>("projectile_textures/gatling_projectile");
 
+            healthSquareTexture = Content.Load<Texture2D>("player/healthSquare");
+
             #region"DEV CONTENT"
 
             font = Content.Load<SpriteFont>("Tools/spriteFont");
@@ -264,6 +269,8 @@ namespace SpaceGame
             //Update All Players
             updatePlayers(gameTime);
 
+            
+
             #region"Updates bullets and checks collisions"
             //Updates all bullets
             for (int i = 0; i < worldBullets.Count; i++)
@@ -333,17 +340,13 @@ namespace SpaceGame
                         //If not idle
                         if (!enemySwarmAttachTESTList[e].getIdle())
                         {
+                            //Checks Bullets
                             if (i < worldBullets.Count)
                             {
                                 //If hit
                                 if (worldBullets[i].getHitBox().Intersects(enemySwarmAttachTESTList[e].getEnemyHitBox()) && !enemySwarmAttachTESTList[e].getAttached())
                                 {
                                     enemySwarmAttachTESTList[e].hurtEnemy(worldBullets[i].getDamageOfProjectile());
-
-                                    if (enemySwarmAttachTESTList[e].getEnemyHealth() <= 0)
-                                    {
-                                        enemySwarmAttachTESTList.RemoveAt(e);
-                                    }
 
                                     worldBullets.RemoveAt(i);
                                 }
@@ -366,9 +369,6 @@ namespace SpaceGame
             {
                 devMode = !devMode;
             }
-
-            //For showing the middle of the camera (dev helper)
-            cameraRectangle = new Rectangle((int)Camera.cameraCenter.X, (int)Camera.cameraCenter.Y, 20, 20);
 
             #region"Enemy Prototype"
             //Updates enemy prototypes
@@ -413,11 +413,28 @@ namespace SpaceGame
             for (int i = 0; i < enemySwarmAttachTESTList.Count; i++)
             {
                 enemySwarmAttachTESTList[i].update(gravityList, playerArray);
+
+                if (enemySwarmAttachTESTList[i].getEnemyHealth() <= 0)
+                {
+                    enemySwarmAttachTESTList.RemoveAt(i);
+                }
             }
             #endregion
-
-
             //DEVMODE
+
+            //Middle Mouse Button
+            if (mouse.MiddleButton != ButtonState.Pressed && mouse_OLDSTATE.MiddleButton == ButtonState.Pressed)
+            {
+                Random rand = new Random();
+
+                int dispersion = 60;
+
+                for (int i = 0; i < 5; i++)
+                {
+                    enemySwarmAttachTESTList.Add(new EnemySwarm_re(rand.Next(-dispersion, dispersion) + mouse.X + camera.getCameraOrigin().X, rand.Next(-dispersion, dispersion) + mouse.Y + camera.getCameraOrigin().Y, Services));
+                }
+            }
+
             if (devMode)
             {
                 gravityRotation += GRAVITY_WELL_ROTATION;
@@ -444,6 +461,17 @@ namespace SpaceGame
                 {
                     gravityList.Add(new Gravity(mouse.X + camera.getCameraOrigin().X, mouse.Y + camera.getCameraOrigin().Y, 720000));
                     gravityRectangleList.Add(new Rectangle(0, 0, 50, 50));
+                }
+
+                //Hurt Player(1)
+                if(keyboard.IsKeyDown(Keys.OemMinus))
+                {
+                    player1.hurtPlayer(1);
+                }
+                //Repsawn Player(1)
+                if(keyboard.IsKeyDown(Keys.OemPlus))
+                {
+                    player1.respawnPlayer();
                 }
             }
 
@@ -495,6 +523,7 @@ namespace SpaceGame
             }
 
             //Updates the player1 class and passes all inputs
+            player1.setNumOfPlayers(0);
             player1.update(gamePad1, gamePad1_OLDSTATE, keyboard, keyboard_OLDSTATE, mouse, mouse_OLDSTATE, gravityList, gameTime);
             #endregion
 
@@ -732,11 +761,43 @@ namespace SpaceGame
 
             spriteBatch.End();
 
-            #region"DEV DRAWING - STATIC - CONSOLE"
+            #region"STATIC - DEV DRAWING/HEALTH - CONSOLE"
+
+            spriteBatch.Begin();
+
+            //Health Squares Inside
+            for (int i = 0; i < player1.getNumOfHealthSquares(); i++)
+            {
+                spriteBatch.Draw(whiteTexture, new Rectangle((screenSize.Width / 16) + (i * 50), (screenSize.Height / 25) * 23, 50, (int)player1.getPlayerHealthSquareAmount(i) * 5), Color.DarkGreen);
+            }
+
+            //Draw shield
+            spriteBatch.Draw(whiteTexture, new Rectangle((screenSize.Width / 16), (screenSize.Height / 25) * 23, (int)((50 * (player1.getExtraNumOfShields() + 1)) * ((double)player1.getPlayerShield() / player1.getPlayerMaxShield())), 50), Color.Blue * .25f);
+
+            //Draw Damage Rectangle When the player is hurt
+            if (player1.getPlayerHurt())
+            {
+                //Shield Damage
+                if (player1.getPlayerShield() > 0)
+                {
+                    spriteBatch.Draw(whiteTexture, new Rectangle((screenSize.Width / 16), (screenSize.Height / 25) * 23, 50 * player1.getNumOfHealthSquares(), 50), Color.White * 0.80f);
+                }
+                //Hull Damage
+                else
+                {
+                    spriteBatch.Draw(whiteTexture, new Rectangle((screenSize.Width / 16), (screenSize.Height / 25) * 23, 50 * player1.getNumOfHealthSquares(), 50), Color.Red * 0.80f);
+                }
+            }
+            
+
+            //Health Square Border
+            for (int i = 0; i < 4 + player1.getNumOfExtraHealthSquares(); i++)
+            {
+                spriteBatch.Draw(healthSquareTexture, new Rectangle((screenSize.Width / 16) + (i * 50), (screenSize.Height / 25) * 23, 50, 50), Color.White);
+            }
+
             if (devMode)
             {
-                spriteBatch.Begin();
-
                 //Console draw
                 for (int i = 0; i < MAX_CONSOLE; i++)
                 {
@@ -770,17 +831,17 @@ namespace SpaceGame
                     }
                     if (i == 7)
                     {
-                        spriteBatch.DrawString(font, "Farthest enemy from player: " + maxEnemyDistanceFromPlayer, new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.Red);
+                        spriteBatch.DrawString(font, "-----Player Health: " + player1.getPlayerHealth(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
                     }
-                    if(i == 8)
+                    if (i == 8)
                     {
-                        spriteBatch.DrawString(font, "Player 1 Aim Rotation: " + player1.getRotation(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
+                        spriteBatch.DrawString(font, "-----Player Shield: " + player1.getPlayerShield(), new Vector2(0, GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - (20 * (i + 1))), Color.PapayaWhip);
                     }
 
                 }
-
-                spriteBatch.End();
             }
+
+            spriteBatch.End();
             #endregion
 
             base.Draw(gameTime);

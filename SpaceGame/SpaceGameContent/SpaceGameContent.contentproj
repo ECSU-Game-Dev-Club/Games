@@ -84,20 +84,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="player\player_ship_mk2.png">
-      <Name>player_ship_mk2</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="player\player_ship_mk3.png">
-      <Name>player_ship_mk3</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="laser.png">
       <Name>laser</Name>
       <Importer>TextureImporter</Importer>
@@ -121,6 +107,20 @@
   <ItemGroup>
     <Compile Include="player\anims\player_rotate_left.png">
       <Name>player_rotate_left</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="player\healthSquare.png">
+      <Name>healthSquare</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="player\player_ship_shields.png">
+      <Name>player_ship_shields</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

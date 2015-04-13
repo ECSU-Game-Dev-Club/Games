@@ -35,10 +35,16 @@ namespace SpaceGame
         //Default to idle(can change within this frame)
         EnemySwarmAIState enemyState = EnemySwarmAIState.idle;
 
-        #region"Enemy Variables (Speed, Location, and Shit)"
+        //Enemy Damage
+        double damage = 0.5;
+
+        //Boolean hurt
+        bool enemyHurt = false;
+
         //Enemy texture
         Texture2D enemyTexture;
 
+        #region"Enemy Variables (Speed, Location, and Shit)"
         //Enemy location
         Vector2 enemyLocation;
 
@@ -176,6 +182,8 @@ namespace SpaceGame
         //Updates the player every frame
         public void update(List<Gravity> gravityList, Player[] players)
         {
+            enemyHurt = false;
+
             #region"Not Updating"
             if (enemyState == EnemySwarmAIState.notUpdating)
             {
@@ -267,9 +275,12 @@ namespace SpaceGame
                 #endregion
 
                 #region"Attach to target if near"
+
                 //If player is within radius -X-
                 if (playersDistances[targetIndex] < TARGET_ATTACH_RADIUS)
                 {
+                    
+
                     targetAttached = true;
                     enemyThrust.X = 0;
                     enemyThrust.Y = 0;
@@ -283,6 +294,8 @@ namespace SpaceGame
 
                 if (targetAttached && frameCount == 10)
                 {
+                    players[targetIndex].hurtPlayer(damage);
+
                     enemyLocation.X = random.Next((int)players[targetIndex].getPlayerLocation().X - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().X + (players[targetIndex].getPlayerRectangle().Width / 2)) - (WIDTH / 2);
                     enemyLocation.Y = random.Next((int)players[targetIndex].getPlayerLocation().Y - (players[targetIndex].getPlayerRectangle().Width / 2), (int)players[targetIndex].getPlayerLocation().Y + (players[targetIndex].getPlayerRectangle().Width / 2)) - (HEIGHT / 2);
 
@@ -351,6 +364,8 @@ namespace SpaceGame
 
         public void hurtEnemy(int damage)
         {
+            enemyHurt = true;
+
             enemyHealth -= damage;
         }
 
@@ -435,7 +450,7 @@ namespace SpaceGame
         /// <param name="spriteBatch">Provides the SpriteBatch to allow drawing.</param>
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(enemyTexture, enemyLocation, null, Color.LightBlue, enemyRotation + (float)(Math.PI / 2), enemyOrigin, 1.0f, SpriteEffects.FlipHorizontally, 0);
+            spriteBatch.Draw(enemyTexture, enemyLocation, null, Color.White, enemyRotation + (float)(Math.PI / 2), enemyOrigin, 1.0f, SpriteEffects.None, 0);
         }
     }
 }

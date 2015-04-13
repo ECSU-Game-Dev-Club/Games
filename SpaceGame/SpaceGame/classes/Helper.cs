@@ -190,5 +190,31 @@ namespace SpaceGame
             }
             return radians;
         }
+
+        /// <summary>
+        /// Makes all non-transparent pixels white.
+        /// <param name="source">the texture you want to make white.</param>
+        /// <returns>all the non-transparent pixels in the texture as white.</returns>
+        /// </summary>
+        public static Texture2D makeTextureWhite(Texture2D source)
+        {
+            Texture2D whiteTexture = new Texture2D(source.GraphicsDevice, source.Width, source.Height);
+
+            Color[] data = new Color[source.Width * source.Height];
+
+            source.GetData<Color>(data);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (data[i].A > 0)
+                {
+                    data[i] = Color.White;
+                }
+            }
+
+            source.SetData<Color>(data);
+
+            return whiteTexture;
+        }
     }
 }
